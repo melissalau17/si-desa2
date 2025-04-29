@@ -1,14 +1,11 @@
 const Joi = require("joi");
 
 const userSchema = Joi.object({
-  nama: Joi.string().required(),
-  username: Joi.string().required(),
-  password: Joi.string().min(6).required(),
-  NIK: Joi.string().required(),
-  agama: Joi.string().required(),
-  alamat: Joi.string().required(),
-  no_hp: Joi.string().required(),
-  jenis_kel: Joi.string().required(),
+  judul: Joi.string().required(),
+  kategori: Joi.string().required(),
+  tanggal: Joi.string().min(6).optional(),
+  kontent: Joi.string().required(),
+  status: Joi.string().required(),
 
   // Validasi foto profil
   photo: Joi.string()

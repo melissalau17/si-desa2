@@ -15,4 +15,6 @@ router.post(
 router.patch("/users/:id", upload.single("photo"), userController.updateUser);
 router.delete("/users/:id", userController.deleteUser);
 
+router.post("/login", userController.loginUser);
+
 module.exports = router;
