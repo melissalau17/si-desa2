@@ -1,7 +1,6 @@
 const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
-const serverless = require("serverless-http");
 const userRoutes = require("./routes/userRoutes");
 const keuanganRoutes = require("./routes/keuanganRoutes");
 const beritaRoutes = require("./routes/beritaRoutes");
@@ -20,9 +19,7 @@ app.use("/api/", userRoutes);
 app.use("/api/", keuanganRoutes);
 app.use("/api/", beritaRoutes);
 
-// const PORT = process.env.PORT || 5000;
-// app.listen(PORT, () => {
-//   console.log(`API RUNNING SUCCESSFULLY ON PORT http://localhost:${PORT}`);
-// });
-
-module.exports = serverless(app);
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`API RUNNING SUCCESSFULLY ON PORT http://localhost:${PORT}`);
+});
