@@ -1,11 +1,13 @@
 const Joi = require("joi");
 
-const beritaSchema = Joi.object({
-  judul: Joi.string().required(),
-  kategori: Joi.string().required(),
-  tanggal: Joi.string().min(6).optional(),
-  kontent: Joi.string().required(),
-  status: Joi.string().required(),
+const laporanSchema = Joi.object({
+  nama: Joi.string().required(),
+  keluhan: Joi.string().required(),
+  deskripsi: Joi.string().required(),
+  lokasi: Joi.string().required(),
+  tanggal: Joi.string().optional(),
+  vote: Joi.string().optional(),
+  status: Joi.string().optional(),
 
   // Validasi foto profil
   photo: Joi.string()
@@ -27,12 +29,12 @@ const beritaSchema = Joi.object({
     }),
 });
 
-const validateBeritaInput = (req, res, next) => {
-  const { error } = beritaSchema.validate(req.body);
+const validateLaporanInput = (req, res, next) => {
+  const { error } = laporanSchema.validate(req.body);
   if (error) {
     return res.status(400).json({ message: error.message });
   }
   next();
 };
 
-module.exports = validateBeritaInput;
+module.exports = validateLaporanInput;

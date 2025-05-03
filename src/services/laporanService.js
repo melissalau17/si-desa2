@@ -1,9 +1,9 @@
-const beritaModel = require("../models/beritaModel");
+const laporanModel = require("../models/laporanModel");
 const { Buffer } = require("buffer");
 
-exports.getAllBeritas = () => beritaModel.findAll();
+exports.getAllLaporans = () => laporanModel.findAll();
 
-exports.getBeritaById = (id) => beritaModel.findById(id);
+exports.getLaporanById = (id) => laporanModel.findById(id);
 
 // Fungsi untuk mengubah Base64 ke binary
 const convertBase64ToBinary = (base64String) => {
@@ -11,8 +11,9 @@ const convertBase64ToBinary = (base64String) => {
   return buffer;
 };
 
-exports.createBerita = async (data) => {
-  const { judul, kategori, photo, tanggal, kontent, status } = data;
+exports.createLaporan = async (data) => {
+  const { nama, keluhan, photo, tanggal, deskripsi, lokasi, vote, status } =
+    data;
 
   // Jika ada foto, simpan foto sebagai Buffer atau path
   let photoBuffer = null;
@@ -21,31 +22,36 @@ exports.createBerita = async (data) => {
   }
 
   // Simpan berita ke dalam database
-  return beritaModel.create({
-    judul,
-    kategori,
+  return laporanModel.create({
+    nama,
+    keluhan,
     tanggal,
-    kontent,
+    deskripsi,
+    lokasi,
+    vote,
     status,
     photo: photoBuffer, // Simpan foto sebagai Buffer
   });
 };
 
-exports.updateBerita = async (id, data, base64Photo) => {
+exports.updateLaporan = async (id, data, base64Photo) => {
   const updateData = {
-    judul: data.judul,
-    kategori: data.kategori,
+    nama: data.nama,
+    keluhan: data.keluhan,
     photo: data.photo,
     tanggal: data.tanggal,
-    kontent: data.kontent,
+    deskripsi: data.deskripsi,
+    lokasi: data.lokasi,
+    vote: data.vote,
     status: data.status,
   };
 
   if (base64Photo) {
     updateData.photo = convertBase64ToBinary(base64Photo); // Convert Base64 ke Binary (BLOB)
   }
+  //   console.log("UPDATE DATA YANG DIKIRIM KE PRISMA:", updateData);
 
-  return beritaModel.update(id, updateData);
+  return laporanModel.update(id, updateData);
 };
 
-exports.deleteBerita = (id) => beritaModel.remove(id);
+exports.deleteLaporan = (id) => laporanModel.remove(id);

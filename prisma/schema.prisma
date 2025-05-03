@@ -21,7 +21,7 @@ model User {
 }
 
 model Keuangan {
- keuangan_id   Int    @id @default(autoincrement())
+  keuangan_id   Int    @id @default(autoincrement())
  jenisTransaksi  String
  keterangan      String
  kategori        String
@@ -38,4 +38,16 @@ model Berita {
  tanggal         String?
  kontent   String
  status         String
+}
+
+model Laporan {
+   laporan_id Int     @id @default(autoincrement())
+  nama       String
+  keluhan    String
+  deskripsi  String
+  photo      Bytes
+  tanggal    String?
+  lokasi     String
+  vote       Int? @default(0)
+  status     String
 }

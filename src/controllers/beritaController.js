@@ -13,7 +13,7 @@ exports.getAllBeritas = async (req, res) => {
     }
 
     res.status(201).json({
-      message: "User berhasil dimuat!",
+      message: "Laporan berhasil dimuat!",
       data: beritas,
     });
   } catch (error) {

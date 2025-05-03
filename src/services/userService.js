@@ -73,6 +73,7 @@ exports.updateUser = async (id, data, base64Photo) => {
   if (base64Photo) {
     updateData.photo = convertBase64ToBinary(base64Photo); // Convert Base64 ke Binary (BLOB)
   }
+  //   console.log("UPDATE DATA YANG DIKIRIM KE PRISMA:", updateData);
 
   return userModel.update(id, updateData);
 };
