@@ -14,6 +14,10 @@ const convertBase64ToBinary = (base64String) => {
   return buffer;
 };
 
+exports.findByNIK = async (NIK) => {
+  return await userModel.findByNIK(NIK);
+};
+
 exports.createUser = async (data) => {
   const {
     nama,
@@ -29,8 +33,6 @@ exports.createUser = async (data) => {
 
   // Hash password
   const hashedPassword = await hashPassword(password);
-  const NIKFirst = `120724${NIK}`;
-
   // Jika ada foto, simpan foto sebagai Buffer atau path
   let photoBuffer = null;
   if (photo) {
@@ -43,7 +45,7 @@ exports.createUser = async (data) => {
     username,
     password: hashedPassword,
     photo: photoBuffer, // Simpan foto sebagai Buffer
-    NIK: NIKFirst,
+    NIK,
     agama,
     alamat,
     jenis_kel,

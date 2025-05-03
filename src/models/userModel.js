@@ -44,3 +44,9 @@ exports.findUsername = (where) => {
     },
   });
 };
+
+exports.findByNIK = (NIK) => {
+  return prisma.user.findUnique({
+    where: { NIK },
+  });
+};

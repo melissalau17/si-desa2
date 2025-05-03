@@ -57,6 +57,17 @@ exports.createUser = async (req, res) => {
       return res.status(400).json({ message: "Semua field harus diisi!" });
     }
 
+    // Validasi NIK harus diawali dengan 120724
+    if (!NIK.startsWith("120724")) {
+      return res.status(403).json({ message: "Anda bukan warga desa ini!" });
+    }
+
+    // Cek apakah NIK sudah digunakan
+    const existingUser = await userService.findByNIK(NIK);
+    if (existingUser) {
+      return res.status(409).json({ message: "NIK sudah digunakan!" });
+    }
+
     const photo = req.file ? req.file.buffer : null;
 
     const newUser = await userService.createUser({
@@ -84,6 +95,21 @@ exports.updateUser = async (req, res) => {
   try {
     const { nama, username, password, NIK, agama, alamat, jenis_kel, no_hp } =
       req.body;
+
+    // Validasi NIK jika ada perubahan
+    if (NIK && !NIK.startsWith("120724")) {
+      return res.status(403).json({ message: "Anda bukan warga desa ini!" });
+    }
+
+    // Cek apakah NIK sudah digunakan oleh user lain
+    if (NIK) {
+      const existingUser = await userService.findByNIK(NIK);
+      if (existingUser && existingUser.user_id != req.params.id) {
+        return res
+          .status(409)
+          .json({ message: "NIK sudah digunakan oleh user lain!" });
+      }
+    }
 
     const photo = req.file ? req.file.buffer.toString("base64") : null;
 
