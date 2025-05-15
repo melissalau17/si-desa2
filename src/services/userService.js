@@ -54,11 +54,13 @@ exports.createUser = async (data) => {
 };
 
 exports.updateUser = async (id, data, base64Photo) => {
+  const existingUser = await userModel.findById(id);
+  if (!existingUser) return null;
   const updateData = {
     nama: data.nama,
     username: data.username,
     password: data.password,
-    photo: data.photo,
+    photo: data.photo ?? existingUser.photo,
     NIK: data.NIK,
     agama: data.agama,
     alamat: data.alamat,
