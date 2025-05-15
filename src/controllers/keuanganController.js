@@ -64,24 +64,26 @@ exports.getKeuanganById = async (req, res) => {
 
 exports.updateKeuangan = async (req, res) => {
   try {
-    const { jenisTransaksi, keterangan, kategori, tanggal, jumlah, catatan } =
-      req.body;
+    const { jenisTransaksi } = req.body;
+    const { keterangan, kategori, tanggal, jumlah, catatan } = req.body;
+    const updated = await keuanganService.updateKeuangan(
+      req.params.id,
+      {
+        jenisTransaksi,
+        keterangan,
+        kategori,
+        tanggal,
 
-    const updated = await keuanganService.updateKeuangan(req.params.id, {
-      jenisTransaksi,
-      keterangan,
-      kategori,
-      tanggal,
-      jumlah: parseFloat(jumlah),
-      catatan,
-    });
+        catatan,
+      },
+      parseFloat(jumlah)
+    );
 
     if (!updated) {
       return res
         .status(404)
         .json({ message: "Data keuangan tidak ditemukan!" });
     }
-
     res.status(200).json({
       message: "Data keuangan berhasil diperbarui!",
       data: updated,

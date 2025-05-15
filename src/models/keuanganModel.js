@@ -1,6 +1,4 @@
-const { PrismaClient } = require("@prisma/client");
-const { keuangan } = require("../prisma/prismaClient");
-const prisma = new PrismaClient();
+const prisma = require("../prisma/prismaClient");
 
 exports.create = ({
   jenisTransaksi,

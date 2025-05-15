@@ -21,7 +21,7 @@ model User {
 }
 
 model Keuangan {
-  keuangan_id   Int    @id @default(autoincrement())
+ keuangan_id     Int    @id @default(autoincrement())
  jenisTransaksi  String
  keterangan      String
  kategori        String
