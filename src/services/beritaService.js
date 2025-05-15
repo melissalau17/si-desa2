@@ -32,10 +32,12 @@ exports.createBerita = async (data) => {
 };
 
 exports.updateBerita = async (id, data, base64Photo) => {
+  const existingBerita = await beritaModel.findById(id);
+  if (!existingBerita) return null;
   const updateData = {
     judul: data.judul,
     kategori: data.kategori,
-    photo: data.photo,
+    photo: data.photo ?? existingBerita.photo,
     tanggal: data.tanggal,
     kontent: data.kontent,
     status: data.status,
