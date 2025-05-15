@@ -35,10 +35,12 @@ exports.createLaporan = async (data) => {
 };
 
 exports.updateLaporan = async (id, data, base64Photo) => {
+  const existingLaporan = await laporanModel.findById(id);
+  if (!existingLaporan) return null;
   const updateData = {
     nama: data.nama,
     keluhan: data.keluhan,
-    photo: data.photo,
+    photo: data.photo ?? existingLaporan.photo,
     tanggal: data.tanggal,
     deskripsi: data.deskripsi,
     lokasi: data.lokasi,
