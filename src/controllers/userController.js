@@ -1,5 +1,8 @@
 const userService = require("../services/userService");
 const { handleError } = require("../utils/errorrHandler");
+const jwt = require("jsonwebtoken");
+
+const JWT_SECRET = process.env.JWT_SECRET || "rahasia_super_rahasia";
 
 exports.getAllUsers = async (req, res) => {
   try {
@@ -162,16 +165,26 @@ exports.loginUser = async (req, res) => {
         .json({ message: "Username dan password wajib diisi!" });
     }
 
-    // Panggil service untuk login
     const user = await userService.loginUser(username, password);
+
+    // Payload yang ingin kita masukkan ke JWT, bisa user ID atau username
+    const payload = { id: user.id, username: user.username };
+
+    // Generate token, contoh valid 1 jam
+    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "1h" });
 
     res.status(200).json({
       message: "Login berhasil!",
-      data: user, // kirim data user
+      token,
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+      },
     });
   } catch (error) {
-    res.status(400).json({
-      message: error.message || "Something went wrong!",
-    });
+    res
+      .status(400)
+      .json({ message: error.message || "Terjadi kesalahan saat login!" });
   }
 };

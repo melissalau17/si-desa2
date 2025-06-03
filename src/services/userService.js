@@ -4,6 +4,8 @@ const { createError } = require("../utils/errorrHandler");
 const { Buffer } = require("buffer");
 const { comparePassword } = require("../utils/hashUtils");
 
+const bcrypt = require("bcrypt");
+
 exports.getAllUsers = () => userModel.findAll();
 
 exports.getUserById = (id) => userModel.findById(id);
@@ -88,8 +90,7 @@ exports.loginUser = async (username, password) => {
     throw new Error("Username tidak ditemukan!");
   }
 
-  // Periksa kecocokan password yang diinput dengan password yang di-hash di DB
-  const isMatch = await comparePassword(password, user.password);
+  const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) {
     throw new Error("Password salah!");
   }

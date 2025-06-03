@@ -1,0 +1,27 @@
+const jwt = require("jsonwebtoken");
+
+const JWT_SECRET = process.env.JWT_SECRET || "rahasia_super_rahasia";
+
+const authMiddleware = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res
+      .status(401)
+      .json({ message: "Token otorisasi tidak ditemukan!" });
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded; // simpan payload token ke request agar bisa dipakai route selanjutnya
+    next();
+  } catch (error) {
+    return res
+      .status(401)
+      .json({ message: "Token tidak valid atau sudah kadaluarsa!" });
+  }
+};
+
+module.exports = authMiddleware;

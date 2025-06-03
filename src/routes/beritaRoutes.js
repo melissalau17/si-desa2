@@ -3,20 +3,23 @@ const router = express.Router();
 const beritaController = require("../controllers/beritaController");
 const validateBeritaInput = require("../middlewares/validateBeritaInput");
 const upload = require("../middlewares/upload");
+const authMiddleware = require("../middlewares/authMiddleware");
 
-router.get("/beritas", beritaController.getAllBeritas);
-router.get("/beritas/:id", beritaController.getBeritaById);
+router.get("/beritas", authMiddleware, beritaController.getAllBeritas);
+router.get("/beritas/:id", authMiddleware, beritaController.getBeritaById);
 router.post(
   "/beritas",
+  authMiddleware,
   upload.single("photo"),
   validateBeritaInput,
   beritaController.createBerita
 );
 router.patch(
   "/beritas/:id",
+  authMiddleware,
   upload.single("photo"),
   beritaController.updateBerita
 );
-router.delete("/beritas/:id", beritaController.deleteBerita);
+router.delete("/beritas/:id", authMiddleware, beritaController.deleteBerita);
 
 module.exports = router;
