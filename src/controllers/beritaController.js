@@ -52,6 +52,10 @@ exports.createBerita = async (req, res) => {
 
     const photo = req.file ? req.file.buffer : null;
 
+    if (!photo) {
+      return res.status(400).json({ message: "Photo harus diisi!" });
+    }
+
     const newBerita = await beritaService.createBerita({
       judul,
       kategori,

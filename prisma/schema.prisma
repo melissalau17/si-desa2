@@ -51,3 +51,20 @@ model Laporan {
   vote       Int? @default(0)
   status     String
 }
+
+model Surat {
+  surat_id       Int     @id @default(autoincrement())
+  NIK            String     @unique
+  nama           String
+  tempat_lahir   String
+  tanggal_lahir  DateTime
+  jenis_kelamin  String
+  agama          String
+  alamat         String
+  no_hp          String
+  email          String
+  tujuan_surat   String
+  jenis_surat    String
+  photo_ktp      Bytes?
+  photo_kk       Bytes?
+}
