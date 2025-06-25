@@ -14,6 +14,7 @@ exports.create = ({
   alamat,
   jenis_kel,
   no_hp,
+  role,
 }) =>
   prisma.User.create({
     data: {
@@ -26,6 +27,7 @@ exports.create = ({
       alamat,
       jenis_kel,
       no_hp,
+      role,
     },
   });
 
@@ -41,6 +43,14 @@ exports.findUsername = (where) => {
   return prisma.User.findFirst({
     where: {
       username: where,
+    },
+  });
+};
+
+exports.findRole = (where) => {
+  return prisma.User.findFirst({
+    where: {
+      role: where,
     },
   });
 };

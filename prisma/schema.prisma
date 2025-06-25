@@ -18,7 +18,9 @@ model User {
   username   String
   password   String
   photo      Bytes?
+  role       String  @default("penduduk")
 }
+
 
 model Keuangan {
  keuangan_id     Int    @id @default(autoincrement())

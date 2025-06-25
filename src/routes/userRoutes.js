@@ -9,6 +9,7 @@ router.get("/users", authMiddleware, userController.getAllUsers);
 router.get("/users/:id", authMiddleware, userController.getUserById);
 router.post(
   "/users",
+  authMiddleware,
   upload.single("photo"),
   validateUserInput,
   userController.createUser
@@ -21,6 +22,6 @@ router.patch(
 );
 router.delete("/users/:id", authMiddleware, userController.deleteUser);
 
-router.post("/login", userController.loginUser);
+router.all("/login", authMiddleware, userController.loginUser);
 
 module.exports = router;

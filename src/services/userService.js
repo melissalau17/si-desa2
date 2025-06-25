@@ -31,6 +31,7 @@ exports.createUser = async (data) => {
     alamat,
     jenis_kel,
     no_hp,
+    role,
   } = data;
 
   // Hash password
@@ -52,6 +53,7 @@ exports.createUser = async (data) => {
     alamat,
     jenis_kel,
     no_hp,
+    role,
   });
 };
 
@@ -68,6 +70,7 @@ exports.updateUser = async (id, data, base64Photo) => {
     alamat: data.alamat,
     jenis_kel: data.jenis_kel,
     no_hp: data.no_hp,
+    role: data.role,
   };
 
   if (data.password) {
@@ -84,10 +87,14 @@ exports.updateUser = async (id, data, base64Photo) => {
 
 exports.deleteUser = (id) => userModel.remove(id);
 
-exports.loginUser = async (username, password) => {
+exports.loginUser = async (username, password, role) => {
   const user = await userModel.findUsername(username);
   if (!user) {
     throw new Error("Username tidak ditemukan!");
+  }
+  const user2 = await userModel.findRole(role);
+  if (!user2) {
+    throw new Error("Role tidak ditemukan!");
   }
 
   const isMatch = await bcrypt.compare(password, user.password);

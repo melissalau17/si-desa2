@@ -52,7 +52,6 @@ exports.createLaporan = async (req, res) => {
     const tanggal = moment().tz("Asia/Jakarta").format("YYYY-MM-DDTHH:mm:ss"); // Tanpa 'Z' untuk zona WIB
 
     const photo = req.file ? req.file.buffer : null;
-
     const newLaporan = await laporanService.createLaporan({
       nama,
       keluhan,

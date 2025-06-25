@@ -9,6 +9,7 @@ const userSchema = Joi.object({
   alamat: Joi.string().required(),
   no_hp: Joi.string().required(),
   jenis_kel: Joi.string().required(),
+  role: Joi.string().required(),
 
   // Validasi foto profil
   photo: Joi.string()
