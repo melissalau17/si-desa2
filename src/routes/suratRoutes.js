@@ -1,12 +1,13 @@
 const express = require("express");
 const router = express.Router();
+
 const suratController = require("../controllers/suratController");
 const validateSuratInput = require("../middlewares/validateSuratInput");
 const upload = require("../middlewares/upload");
-
 const authMiddleware = require("../middlewares/authMiddleware");
 
 router.get("/letters", authMiddleware, suratController.getAllSurat);
+
 router.get("/letters/:id", authMiddleware, suratController.getSuratById);
 
 router.post(
@@ -15,7 +16,10 @@ router.post(
   upload.fields([
     { name: "photo_ktp", maxCount: 1 },
     { name: "photo_kk", maxCount: 1 },
+    { name: "foto_usaha", maxCount: 1 },
+    { name: "gaji_ortu", maxCount: 1 },
   ]),
+  validateSuratInput, // Aktifkan jika input via base64
   suratController.createSurat
 );
 
@@ -25,6 +29,8 @@ router.patch(
   upload.fields([
     { name: "photo_ktp", maxCount: 1 },
     { name: "photo_kk", maxCount: 1 },
+    { name: "foto_usaha", maxCount: 1 },
+    { name: "gaji_ortu", maxCount: 1 },
   ]),
   suratController.updateSurat
 );

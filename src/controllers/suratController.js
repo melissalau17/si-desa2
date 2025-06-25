@@ -40,41 +40,42 @@ exports.getSuratById = async (req, res) => {
 exports.createSurat = async (req, res) => {
   try {
     const {
-      NIK,
+      nik,
       nama,
       tempat_lahir,
       tanggal_lahir,
       jenis_kelamin,
       agama,
       alamat,
-      no_hp,
-      email,
-      tujuan_surat,
       jenis_surat,
+      tujuan_surat,
+      waktu_kematian,
     } = req.body;
 
-    if (!NIK.startsWith("120724")) {
+    if (!nik.startsWith("120724")) {
       return res.status(403).json({ message: "Anda bukan warga desa ini!" });
     }
 
-    const existingSurat = await suratService.findByNIK(NIK);
-    if (existingSurat) {
-      return res.status(409).json({ message: "NIK sudah terdaftar!" });
-    }
+    //  const existingSurat = await suratService.findByNIK(nik);
+    //  if (existingSurat) {
+    //    return res.status(409).json({ message: "NIK sudah terdaftar!" });
+    //  }
 
-    const photo_kk = req.files?.photo_kk?.[0]?.buffer || null;
     const photo_ktp = req.files?.photo_ktp?.[0]?.buffer || null;
+    const photo_kk = req.files?.photo_kk?.[0]?.buffer || null;
+    const foto_usaha = req.files?.foto_usaha?.[0]?.buffer || null;
+    const gaji_ortu = req.files?.gaji_ortu?.[0]?.buffer || null;
 
     if (!photo_ktp || !photo_kk) {
       return res.status(400).json({ message: "KTP dan KK wajib diunggah!" });
     }
 
-    // Parse "DD-MM-YYYY" ke objek Date valid di zona Asia/Jakarta
+    // Pastikan format DD-MM-YYYY dikonversi ke objek Date
     const parsedTanggalLahir = moment
       .tz(tanggal_lahir, "DD-MM-YYYY", "Asia/Jakarta")
+      .add(+1, "day")
       .toDate();
 
-    // Validasi apakah hasil parsing benar
     if (!parsedTanggalLahir || isNaN(parsedTanggalLahir.getTime())) {
       return res
         .status(400)
@@ -82,19 +83,21 @@ exports.createSurat = async (req, res) => {
     }
 
     const newSurat = await suratService.createSurat({
-      NIK,
+      nik,
       nama,
       tempat_lahir,
       tanggal_lahir: parsedTanggalLahir,
       jenis_kelamin,
       agama,
       alamat,
-      no_hp,
-      email,
-      tujuan_surat,
       jenis_surat,
-      photo_kk,
+      tujuan_surat,
+      waktu_kematian,
       photo_ktp,
+      photo_kk,
+      foto_usaha,
+      gaji_ortu,
+      tanggal: moment().tz("Asia/Jakarta").toDate(),
     });
 
     res.status(201).json({
@@ -109,68 +112,69 @@ exports.createSurat = async (req, res) => {
 exports.updateSurat = async (req, res) => {
   try {
     const {
-      NIK,
+      nik,
       nama,
       tempat_lahir,
       tanggal_lahir,
       jenis_kelamin,
       agama,
       alamat,
-      no_hp,
-      email,
-      tujuan_surat,
       jenis_surat,
+      tujuan_surat,
+      waktu_kematian,
     } = req.body;
 
-    const photo_kk = req.files?.photo_kk?.[0]?.buffer || null;
     const photo_ktp = req.files?.photo_ktp?.[0]?.buffer || null;
-    if (NIK && !NIK.startsWith("120724")) {
+    const photo_kk = req.files?.photo_kk?.[0]?.buffer || null;
+    const foto_usaha = req.files?.foto_usaha?.[0]?.buffer || null;
+    const gaji_ortu = req.files?.gaji_ortu?.[0]?.buffer || null;
+
+    if (nik && !nik.startsWith("120724")) {
       return res.status(403).json({ message: "Anda bukan warga desa ini!" });
     }
 
-    // Cek NIK duplikat kalau ada perubahan
-    if (NIK) {
-      const existingSurat = await suratService.findByNIK(NIK);
-      if (existingSurat && existingSurat.surat_id != req.params.id) {
-        return res
-          .status(409)
-          .json({ message: "NIK sudah digunakan oleh surat lain!" });
-      }
-    }
+    //  if (nik) {
+    //    const existingSurat = await suratService.findByNIK(nik);
+    //    if (existingSurat && existingSurat.surat_id != req.params.id) {
+    //      return res
+    //        .status(409)
+    //        .json({ message: "NIK sudah digunakan oleh surat lain!" });
+    //    }
+    //  }
 
-    // Parse tanggal_lahir jika ada
-    let parsedTanggalLahir = undefined;
-    if (tanggal_lahir) {
-      parsedTanggalLahir = moment
-        .tz(tanggal_lahir, "DD-MM-YYYY", "Asia/Jakarta")
-        .toDate();
+    const parsedTanggalLahir = moment
+      .tz(tanggal_lahir, "DD-MM-YYYY", "Asia/Jakarta")
+      .add(+1, "day")
+      .toDate();
 
-      if (isNaN(parsedTanggalLahir.getTime())) {
-        return res
-          .status(400)
-          .json({ message: "Format tanggal_lahir tidak valid!" });
-      }
-    }
+    //  if (!parsedTanggalLahir || isNaN(parsedTanggalLahir.getTime())) {
+    //    return res
+    //      .status(400)
+    //      .json({ message: "Format tanggal_lahir tidak valid!" });
+    //  }
 
     const updatedSurat = await suratService.updateSurat(req.params.id, {
-      NIK,
+      nik,
       nama,
       tempat_lahir,
       tanggal_lahir: parsedTanggalLahir,
       jenis_kelamin,
       agama,
       alamat,
-      no_hp,
-      email,
-      tujuan_surat,
       jenis_surat,
-      photo_kk,
+      tujuan_surat,
+      waktu_kematian,
       photo_ktp,
+      photo_kk,
+      foto_usaha,
+      gaji_ortu,
     });
 
     if (!updatedSurat) {
       return res.status(404).json({ message: "Surat tidak ditemukan!" });
     }
+
+    //  console.log("PARAMS ID:", req.params.id);
 
     res.status(200).json({
       message: "Surat berhasil diperbarui!",
@@ -184,7 +188,6 @@ exports.updateSurat = async (req, res) => {
 exports.deleteSurat = async (req, res) => {
   try {
     const deleted = await suratService.deleteSurat(req.params.id);
-
     if (!deleted) {
       return res.status(404).json({ message: "Surat tidak ditemukan!" });
     }

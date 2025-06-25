@@ -1,45 +1,51 @@
 const prisma = require("../prisma/prismaClient");
 
+// Ambil semua data surat
 exports.findAll = () => prisma.surat.findMany();
 
+// Ambil surat berdasarkan ID
 exports.findById = (id) =>
   prisma.surat.findUnique({
     where: { surat_id: Number(id) },
   });
 
+// Buat surat baru
 exports.create = ({
-  NIK,
+  nik,
   nama,
   tempat_lahir,
   tanggal_lahir,
   jenis_kelamin,
   agama,
   alamat,
-  no_hp,
-  email,
-  tujuan_surat,
   jenis_surat,
+  tujuan_surat,
   photo_ktp,
   photo_kk,
+  foto_usaha,
+  waktu_kematian,
+  gaji_ortu,
 }) =>
   prisma.surat.create({
     data: {
-      NIK,
+      nik,
       nama,
       tempat_lahir,
       tanggal_lahir: new Date(tanggal_lahir),
       jenis_kelamin,
       agama,
       alamat,
-      no_hp,
-      email,
-      tujuan_surat,
       jenis_surat,
+      tujuan_surat,
       photo_ktp,
       photo_kk,
+      foto_usaha,
+      waktu_kematian,
+      gaji_ortu,
     },
   });
 
+// Update surat berdasarkan ID
 exports.update = (id, data) =>
   prisma.surat
     .update({
@@ -48,6 +54,7 @@ exports.update = (id, data) =>
     })
     .catch(() => null);
 
+// Hapus surat berdasarkan ID
 exports.remove = (id) =>
   prisma.surat
     .delete({
@@ -55,7 +62,8 @@ exports.remove = (id) =>
     })
     .catch(() => null);
 
-exports.findByNIK = (NIK) =>
-  prisma.surat.findUnique({
-    where: { NIK },
+// Cari surat berdasarkan NIK
+exports.findByNIK = (nik) =>
+  prisma.surat.findFirst({
+    where: { nik },
   });

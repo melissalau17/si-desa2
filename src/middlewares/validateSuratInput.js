@@ -13,68 +13,54 @@ const allowedMimeTypes = [
 
 const base64Pattern = /^data:([a-zA-Z0-9\/\.\-]+);base64,/;
 
+const validateBase64File = (fieldName) =>
+  Joi.string()
+    .optional()
+    .custom((value, helpers) => {
+      const match = value.match(base64Pattern);
+      if (!match) {
+        return helpers.message(
+          `${fieldName} harus berupa data Base64 yang valid.`
+        );
+      }
+
+      const mimeType = match[1];
+      if (!allowedMimeTypes.includes(mimeType)) {
+        return helpers.message(
+          `Tipe file ${fieldName} '${mimeType}' tidak didukung.`
+        );
+      }
+
+      const base64Data = value.split(",")[1];
+      if (Buffer.from(base64Data, "base64").length > 10 * 1024 * 1024) {
+        return helpers.message(
+          `Ukuran file ${fieldName} harus kurang dari 10MB.`
+        );
+      }
+
+      return value;
+    });
+
 const suratSchema = Joi.object({
-  NIK: Joi.string().required(),
+  nik: Joi.string().required(),
   nama: Joi.string().required(),
   tempat_lahir: Joi.string().required(),
-  tanggal_lahir: Joi.date().required(),
+  tanggal_lahir: Joi.string()
+    .required()
+    .pattern(/^\d{2}-\d{2}-\d{4}$/)
+    .message("Format tanggal_lahir harus DD-MM-YYYY"),
   jenis_kelamin: Joi.string().required(),
   agama: Joi.string().required(),
   alamat: Joi.string().required(),
-  no_hp: Joi.string().required(),
-  email: Joi.string().email().required(),
   tujuan_surat: Joi.string().required(),
   jenis_surat: Joi.string().required(),
+  waktu_kematian: Joi.string().optional(), // bisa juga null
 
-  photo_ktp: Joi.string()
-    .optional()
-    .custom((value, helpers) => {
-      const match = value.match(base64Pattern);
-      if (!match) {
-        return helpers.message(
-          "photo_ktp harus berupa data Base64 dengan tipe MIME yang valid."
-        );
-      }
-
-      const mimeType = match[1];
-      if (!allowedMimeTypes.includes(mimeType)) {
-        return helpers.message(
-          `Tipe file photo_ktp '${mimeType}' tidak didukung.`
-        );
-      }
-
-      const base64Data = value.split(",")[1];
-      if (Buffer.from(base64Data, "base64").length > 10 * 1024 * 1024) {
-        return helpers.message("Ukuran file photo_ktp harus kurang dari 10MB.");
-      }
-
-      return value;
-    }),
-
-  photo_kk: Joi.string()
-    .optional()
-    .custom((value, helpers) => {
-      const match = value.match(base64Pattern);
-      if (!match) {
-        return helpers.message(
-          "photo_kk harus berupa data Base64 dengan tipe MIME yang valid."
-        );
-      }
-
-      const mimeType = match[1];
-      if (!allowedMimeTypes.includes(mimeType)) {
-        return helpers.message(
-          `Tipe file photo_kk '${mimeType}' tidak didukung.`
-        );
-      }
-
-      const base64Data = value.split(",")[1];
-      if (Buffer.from(base64Data, "base64").length > 10 * 1024 * 1024) {
-        return helpers.message("Ukuran file photo_kk harus kurang dari 10MB.");
-      }
-
-      return value;
-    }),
+  // Optional file fields in Base64 format
+  photo_ktp: validateBase64File("photo_ktp"),
+  photo_kk: validateBase64File("photo_kk"),
+  foto_usaha: validateBase64File("foto_usaha"),
+  gaji_ortu: validateBase64File("gaji_ortu"),
 });
 
 const validateSuratInput = (req, res, next) => {

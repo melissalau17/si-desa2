@@ -90,9 +90,9 @@ exports.updateLaporan = async (req, res) => {
     const voteCount = vote !== undefined ? parseInt(vote) : laporan.vote;
     let status = "";
 
-    if (voteCount >= 10) {
+    if (voteCount >= 50) {
       status = "Sedang Dikerjakan";
-    } else if (voteCount <= 9) {
+    } else if (voteCount <= 49) {
       status = "Belum Dikerjakan";
     }
 
