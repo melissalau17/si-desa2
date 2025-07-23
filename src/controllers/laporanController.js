@@ -1,6 +1,7 @@
 const laporanService = require("../services/laporanService");
 const { handleError } = require("../utils/errorrHandler");
 const moment = require("moment-timezone");
+const { io } = require("../index");
 
 exports.getAllLaporans = async (req, res) => {
   try {
@@ -41,26 +42,34 @@ exports.getLaporanById = async (req, res) => {
 
 exports.createLaporan = async (req, res) => {
   try {
-    const { nama, keluhan, deskripsi, lokasi, vote } = req.body;
+    const { nama, keluhan, deskripsi, lokasi, vote, photo: photoBase64 } = req.body;
 
     if (!nama || !lokasi || !keluhan || !deskripsi) {
       return res.status(400).json({ message: "Semua field harus diisi!" });
     }
 
-    status = "belm dikerjakan";
-    // Ambil waktu sekarang dalam zona Asia/Jakarta (WIB) dan formatkan dalam ISO 8601
-    const tanggal = moment().tz("Asia/Jakarta").format("YYYY-MM-DDTHH:mm:ss"); // Tanpa 'Z' untuk zona WIB
+    const status = "belum dikerjakan";
+    const tanggal = moment().tz("Asia/Jakarta").format("YYYY-MM-DDTHH:mm:ss");
 
-    const photo = req.file ? req.file.buffer : null;
-    const newLaporan = await laporanService.createLaporan({
+    const data = {
       nama,
       keluhan,
-      tanggal, // Waktu yang sudah dalam format ISO-8601 tanpa 'Z' (WIB)
+      tanggal,
       lokasi,
       deskripsi,
-      photo,
       vote,
       status,
+      ...(photoBase64 && {
+        photo: Buffer.from(photoBase64.split(',')[1], 'base64'),
+      }),
+    };
+
+    const newLaporan = await laporanService.createLaporan(data);
+
+    io.emit("notification", {
+      title: "Laporan Baru",
+      body: `${nama} mengirim laporan: ${keluhan}`,
+      time: timestamp,
     });
 
     res.status(201).json({

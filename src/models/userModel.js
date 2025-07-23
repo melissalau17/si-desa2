@@ -7,6 +7,7 @@ exports.findById = (id) =>
 exports.create = ({
   nama,
   username,
+  email,
   password,
   photo,
   NIK,
@@ -20,6 +21,7 @@ exports.create = ({
     data: {
       nama,
       username,
+      email,
       password,
       photo,
       NIK,
@@ -47,6 +49,34 @@ exports.findUsername = (where) => {
   });
 };
 
+exports.findUserByUsernameOrEmailAndRole = async (identifier, role) => {
+  return prisma.user.findFirst({
+    where: {
+      role,
+      OR: [
+        { username: identifier },
+        { email: identifier },
+      ],
+    },
+  });
+};
+
+exports.findByEmail = (email) => {
+  return prisma.User.findUnique({ where: { email } });
+};
+
+exports.findByUsernameOrEmail = (identifier) => {
+  return prisma.User.findFirst({
+    where: {
+      OR: [
+        { username: identifier },
+        { email: identifier },
+      ],
+    },
+  });
+};
+
+
 exports.findRole = (where) => {
   return prisma.User.findFirst({
     where: {
@@ -56,7 +86,8 @@ exports.findRole = (where) => {
 };
 
 exports.findByNIK = (NIK) => {
-  return prisma.user.findUnique({
+  return prisma.User.findUnique({ 
     where: { NIK },
   });
 };
+

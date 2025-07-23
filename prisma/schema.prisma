@@ -16,6 +16,7 @@ model User {
   alamat     String
   agama      String
   username   String
+  email      String?
   password   String
   photo      Bytes?
   role       String  @default("penduduk")
@@ -47,7 +48,7 @@ model Laporan {
   nama       String
   keluhan    String
   deskripsi  String
-  photo      Bytes
+  photo      Bytes?
   tanggal    String?
   lokasi     String
   vote       Int? @default(0)
@@ -58,17 +59,20 @@ model Surat {
   surat_id           Int      @id @default(autoincrement())
   nama               String
   nik                String
-  tempat_lahir       String
-  tanggal_lahir      DateTime
-  jenis_kelamin      String
-  agama              String
+  tempat_lahir       String?
+  tanggal_lahir      DateTime?
+  jenis_kelamin      String?
+  agama              String?
   alamat             String
   jenis_surat        String
-  tujuan_surat       String
+  tujuan_surat       String?
+  no_hp              String?
+  email              String?
   photo_ktp          Bytes?
   photo_kk           Bytes?
   foto_usaha         Bytes?
   waktu_kematian     String?
   gaji_ortu          Bytes?
   tanggal         DateTime   @default(now())
+  status             String?   @default("Menunggu")
 }

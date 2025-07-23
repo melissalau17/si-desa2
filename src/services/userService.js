@@ -10,9 +10,8 @@ exports.getAllUsers = () => userModel.findAll();
 
 exports.getUserById = (id) => userModel.findById(id);
 
-// Fungsi untuk mengubah Base64 ke binary
 const convertBase64ToBinary = (base64String) => {
-  const buffer = Buffer.from(base64String, "base64"); // Convert Base64 ke Binary
+  const buffer = Buffer.from(base64String, "base64"); 
   return buffer;
 };
 
@@ -24,6 +23,7 @@ exports.createUser = async (data) => {
   const {
     nama,
     username,
+    email,
     password,
     photo,
     NIK,
@@ -46,6 +46,7 @@ exports.createUser = async (data) => {
   return userModel.create({
     nama,
     username,
+    email,
     password: hashedPassword,
     photo: photoBuffer, // Simpan foto sebagai Buffer
     NIK,
@@ -63,6 +64,7 @@ exports.updateUser = async (id, data, base64Photo) => {
   const updateData = {
     nama: data.nama,
     username: data.username,
+    email: data.email,
     password: data.password,
     photo: data.photo ?? existingUser.photo,
     NIK: data.NIK,
@@ -80,24 +82,26 @@ exports.updateUser = async (id, data, base64Photo) => {
   if (base64Photo) {
     updateData.photo = convertBase64ToBinary(base64Photo); // Convert Base64 ke Binary (BLOB)
   }
-  //   console.log("UPDATE DATA YANG DIKIRIM KE PRISMA:", updateData);
 
   return userModel.update(id, updateData);
 };
 
 exports.deleteUser = (id) => userModel.remove(id);
 
-exports.loginUser = async (username, password, role) => {
-  const user = await userModel.findUsername(username);
+exports.loginUser = async (identifier, password, role) => {
+  // Cari user berdasarkan username atau email
+  const user = await userModel.findByUsernameOrEmail(identifier);
   if (!user) {
-    throw new Error("Username tidak ditemukan!");
-  }
-  const user2 = await userModel.findRole(role);
-  if (!user2) {
-    throw new Error("Role tidak ditemukan!");
+    throw new Error("Email atau username tidak ditemukan!");
   }
 
-  const isMatch = await bcrypt.compare(password, user.password);
+  // Validasi role
+  if (user.role !== role) {
+    throw new Error("Role tidak cocok!");
+  }
+
+  // Cek password
+  const isMatch = await verifyPassword(password, user.password);
   if (!isMatch) {
     throw new Error("Password salah!");
   }

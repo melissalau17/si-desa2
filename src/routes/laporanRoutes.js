@@ -8,17 +8,17 @@ const authMiddleware = require("../middlewares/authMiddleware");
 router.get("/reports", authMiddleware, laporanController.getAllLaporans);
 router.get("/reports/:id", authMiddleware, laporanController.getLaporanById);
 router.post(
-  "/reports",
-  authMiddleware,
-  upload.single("photo"),
-  validateLaporanInput,
-  laporanController.createLaporan
+    "/reports",
+    authMiddleware,
+    upload.single("photo"),
+    validateLaporanInput,
+    laporanController.createLaporan
 );
 router.patch(
-  "/reports/:id",
-  authMiddleware,
-  upload.single("photo"),
-  laporanController.updateLaporan
+    "/reports/:id",
+    authMiddleware,
+    upload.single("photo"),
+    laporanController.updateLaporan
 );
 router.delete("/reports/:id", authMiddleware, laporanController.deleteLaporan);
 
