@@ -4,7 +4,7 @@ const { createError } = require("../utils/errorrHandler");
 const { Buffer } = require("buffer");
 const { comparePassword } = require("../utils/hashUtils");
 
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 
 exports.getAllUsers = () => userModel.findAll();
 

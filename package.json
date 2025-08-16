@@ -13,7 +13,6 @@
   "description": "",
   "dependencies": {
     "@prisma/client": "^6.6.0",
-    "bcrypt": "^5.1.1",
     "bcryptjs": "^3.0.2",
     "buffer": "^6.0.3",
     "cors": "^2.8.5",
