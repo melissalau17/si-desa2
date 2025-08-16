@@ -60,8 +60,9 @@ io.on("connection", (socket) => {
 });
 
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => {
-  console.log(`API + Socket.IO running at http://localhost:${PORT}`);
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`API + Socket.IO running at http://0.0.0.0:${PORT}`);
 });
+
 
 module.exports = { app, server, io };
