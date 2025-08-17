@@ -28,7 +28,10 @@ const io = new Server(server, {
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors());
+app.use(cors({
+  origin: "https://admin-sidesa.vercel.app",
+  credentials: true
+}));
 
 // Test route
 app.get("/api", (req, res) => {
