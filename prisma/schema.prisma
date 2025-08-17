@@ -21,8 +21,9 @@ model User {
   password   String
   photo      Bytes?
   role       String  @default("penduduk")
-}
 
+  @@map("user")
+}
 
 model Keuangan {
  keuangan_id     Int    @id @default(autoincrement())
@@ -32,6 +33,8 @@ model Keuangan {
  tanggal         DateTime
  jumlah          Decimal @db.Decimal(15, 2)
  catatan         String
+
+ @@map("keuangan")
 }
 
 model Berita {
@@ -42,6 +45,8 @@ model Berita {
  tanggal         String?
  kontent   String
  status         String
+
+ @@map("berita")
 }
 
 model Laporan {
@@ -54,6 +59,8 @@ model Laporan {
   lokasi     String
   vote       Int? @default(0)
   status     String
+
+  @@map("laporan")
 }
 
 model Surat {
@@ -76,4 +83,6 @@ model Surat {
   gaji_ortu          Bytes?
   tanggal         DateTime   @default(now())
   status             String?   @default("Menunggu")
+
+  @@map("surat")
 }
