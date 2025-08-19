@@ -19,7 +19,7 @@ router.post(
     { name: "foto_usaha", maxCount: 1 },
     { name: "gaji_ortu", maxCount: 1 },
   ]),
-  validateSuratInput, // Aktifkan jika input via base64
+  validateSuratInput,
   suratController.createSurat
 );
 
@@ -36,5 +36,7 @@ router.patch(
 );
 
 router.delete("/letters/:id", authMiddleware, suratController.deleteSurat);
+
+router.get("/letters/:id/print", authMiddleware, suratController.printSurat);
 
 module.exports = router;

@@ -2,6 +2,9 @@ const suratService = require("../services/suratService");
 const { handleError } = require("../utils/errorrHandler");
 const moment = require("moment-timezone");
 const { io } = require("../index");
+const puppeteer = require("puppeteer");
+const suratTemplate = require("../templates/suratTemplate");
+const QRCode = require("qrcode");
 
 exports.getAllSurat = async (req, res) => {
     try {
@@ -224,4 +227,40 @@ exports.deleteSurat = async (req, res) => {
     } catch (error) {
         handleError(res, error);
     }
+};
+
+exports.printSurat = async (req, res) => {
+  try {
+    const suratData = {
+      nama: "Budi Santoso",
+      nik: "1234567890123456",
+      tempat_lahir: "Bandung",
+      tanggal_lahir: "01-01-1990",
+      alamat: "Jl. Melati No. 5",
+      jenis_surat: "Keterangan Usaha",
+      tujuan_surat: "Pengajuan Kredit Bank",
+      tanggal: new Date().toLocaleDateString("id-ID"),
+      kepala_desa: "Sutrisno",
+      qrCodeUrl: await QRCode.toDataURL("https://desa-maju-jaya.go.id/verifikasi/123"),
+    };
+
+    const html = suratTemplate(suratData);
+
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: "networkidle0" });
+
+    const pdfBuffer = await page.pdf({ format: "A4" });
+    await browser.close();
+
+    res.set({
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `inline; filename="surat-${suratData.nama}.pdf"`,
+    });
+
+    res.send(pdfBuffer);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Gagal mencetak surat");
+  }
 };
