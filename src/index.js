@@ -3,6 +3,7 @@ const dotenv = require("dotenv");
 const cors = require("cors");
 const http = require("http");
 const { Server } = require("socket.io");
+const serverless = require("serverless-http");
 
 // Route imports
 const userRoutes = require("./routes/userRoutes");
@@ -69,3 +70,4 @@ server.listen(PORT, '0.0.0.0', () => {
 
 
 module.exports = { app, server, io };
+module.exports.handler = serverless(app);

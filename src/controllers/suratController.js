@@ -2,7 +2,8 @@ const suratService = require("../services/suratService");
 const { handleError } = require("../utils/errorrHandler");
 const moment = require("moment-timezone");
 const { io } = require("../index");
-const puppeteer = require("puppeteer");
+const chromium = require("@sparticuz/chromium");
+const puppeteer = require("puppeteer-core");
 const suratTemplate = require("../templates/suratTemplate");
 const QRCode = require("qrcode");
 
@@ -246,7 +247,11 @@ exports.printSurat = async (req, res) => {
 
     const html = suratTemplate(suratData);
 
-    const browser = await puppeteer.launch();
+    const browser = await puppeteer.launch({
+        args: chromium.args,
+        executablePath: await chromium.executablePath(),
+        headless: chromium.headless,
+    });
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: "networkidle0" });
 
