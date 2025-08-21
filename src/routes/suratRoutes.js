@@ -37,6 +37,9 @@ router.patch(
 
 router.delete("/letters/:id", authMiddleware, suratController.deleteSurat);
 
-router.get("/letters/:id/print", authMiddleware, suratController.printSurat);
+router.get("/letters/:id/print", authMiddleware, (req, res) => {
+  console.log("PRINT SURAT HIT:", req.params.id);
+  suratController.printSurat(req, res);
+});
 
 module.exports = router;
