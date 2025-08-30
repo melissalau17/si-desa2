@@ -232,17 +232,20 @@ exports.deleteSurat = async (req, res) => {
 
 exports.printSurat = async (req, res) => {
   try {
+    const { nama, nik, jenis_surat, alamat, tujuan_surat } = req.body;
     const suratData = {
-      nama: "Budi Santoso",
-      nik: "1234567890123456",
-      tempat_lahir: "Bandung",
-      tanggal_lahir: "01-01-1990",
-      alamat: "Jl. Melati No. 5",
-      jenis_surat: "Keterangan Usaha",
-      tujuan_surat: "Pengajuan Kredit Bank",
+      nama: nama,
+      nik: nik,
+      tempat_lahir: req.body.tempat_lahir,
+      tanggal_lahir: req.body.tanggal_lahir,
+      alamat: alamat,
+      jenis_surat: jenis_surat,
+      tujuan_surat: tujuan_surat,
       tanggal: new Date().toLocaleDateString("id-ID"),
-      kepala_desa: "Sutrisno",
-      qrCodeUrl: await QRCode.toDataURL("https://desa-maju-jaya.go.id/verifikasi/123"),
+      kepala_desa: "Sutrisno", // This can also be dynamic if needed
+      qrCodeUrl: await QRCode.toDataURL(
+        `https://desa-maju-jaya.go.id/verifikasi/${nik}` // Dynamic QR code
+      ),
     };
 
     const html = suratTemplate(suratData);
