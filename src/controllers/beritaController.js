@@ -74,7 +74,7 @@ exports.createBerita = async (req, res) => {
             tanggal,
         });
 
-        res.status(201).json({
+        res.status(200).json({
             message: "Berita berhasil dibuat!",
             data: newBerita,
         });
@@ -90,7 +90,7 @@ exports.updateBerita = async (req, res) => {
         // Ambil waktu sekarang dalam zona Asia/Jakarta (WIB)
         const tanggal = moment().tz("Asia/Jakarta").format("YYYY-MM-DDTHH:mm:ss"); // Format waktu sesuai ISO-8601 tanpa 'Z'
 
-        const photo = req.file ? req.file.buffer.toString("base64") : null;
+        const photo = req.file ? req.file.buffer : null;
 
         const updatedBerita = await beritaService.updateBerita(req.params.id, {
             judul,
