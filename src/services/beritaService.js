@@ -3,7 +3,7 @@ const { Buffer } = require("buffer");
 
 exports.getAllBeritas = () => beritaModel.findAll();
 
-exports.getBeritaById = (id) => beritaModel.findById(id);
+exports.getBeritaById = (berita_id) => beritaModel.findById(berita_id);
 
 // Fungsi untuk mengubah Base64 ke binary
 const convertBase64ToBinary = (base64String) => {
@@ -31,8 +31,8 @@ exports.createBerita = async (data) => {
   });
 };
 
-exports.updateBerita = async (id, data, base64Photo) => {
-  const existingBerita = await beritaModel.findById(id);
+exports.updateBerita = async (berita_id, data, base64Photo) => {
+  const existingBerita = await beritaModel.findById(berita_id);
   if (!existingBerita) return null;
   const updateData = {
     judul: data.judul,
@@ -47,7 +47,7 @@ exports.updateBerita = async (id, data, base64Photo) => {
     updateData.photo = convertBase64ToBinary(base64Photo); // Convert Base64 ke Binary (BLOB)
   }
 
-  return beritaModel.update(id, updateData);
+  return beritaModel.update(berita_id, updateData);
 };
 
-exports.deleteBerita = (id) => beritaModel.remove(id);
+exports.deleteBerita = (berita_id) => beritaModel.remove(berita_id);

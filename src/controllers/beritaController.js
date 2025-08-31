@@ -51,7 +51,7 @@ exports.createBerita = async (req, res) => {
         // Ambil waktu sekarang dalam zona Asia/Jakarta (WIB) dan formatkan dalam ISO 8601
         const tanggal = moment().tz("Asia/Jakarta").format("YYYY-MM-DDTHH:mm:ss"); // Tanpa 'Z' untuk zona WIB
 
-        const photo = req.file ? req.file.buffer : null;
+        const photo = req.file ? req.file.buffer : undefined;
 
         if (!photo) {
             return res.status(400).json({ message: "Photo harus diisi!" });
@@ -90,7 +90,7 @@ exports.updateBerita = async (req, res) => {
         // Ambil waktu sekarang dalam zona Asia/Jakarta (WIB)
         const tanggal = moment().tz("Asia/Jakarta").format("YYYY-MM-DDTHH:mm:ss"); // Format waktu sesuai ISO-8601 tanpa 'Z'
 
-        const photo = req.file ? req.file.buffer : null;
+        const photo = req.file ? req.file.buffer : undefined;
 
         const updatedBerita = await beritaService.updateBerita(req.params.id, {
             judul,
