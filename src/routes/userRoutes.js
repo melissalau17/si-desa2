@@ -4,7 +4,6 @@ const multer = require('multer');
 
 const userController = require("../controllers/userController");
 const validateUserInput = require("../middlewares/validateUserInput");
-const upload = require("../middlewares/upload");
 const authMiddleware = require("../middlewares/authMiddleware");
 
 const upload = multer({ storage: multer.memoryStorage() });
