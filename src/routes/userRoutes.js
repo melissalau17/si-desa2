@@ -1,10 +1,13 @@
 const express = require("express");
 const router = express.Router();
+const multer = require('multer');
+
 const userController = require("../controllers/userController");
 const validateUserInput = require("../middlewares/validateUserInput");
 const upload = require("../middlewares/upload");
 const authMiddleware = require("../middlewares/authMiddleware");
 
+const upload = multer({ storage: multer.memoryStorage() });
 router.get("/users", authMiddleware, userController.getAllUsers);
 router.get("/users/:id", authMiddleware, userController.getUserById);
 router.post(

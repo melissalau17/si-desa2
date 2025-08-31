@@ -1,10 +1,13 @@
 const express = require("express");
 const router = express.Router();
+const multer = require('multer');
 
 const suratController = require("../controllers/suratController");
 const validateSuratInput = require("../middlewares/validateSuratInput");
-const upload = require("../middlewares/upload");
 const authMiddleware = require("../middlewares/authMiddleware");
+
+// Use a single, correctly configured upload middleware
+const upload = multer({ storage: multer.memoryStorage() });
 
 router.get("/letters", authMiddleware, suratController.getAllSurat);
 

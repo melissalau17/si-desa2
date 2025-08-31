@@ -1,10 +1,12 @@
 const express = require("express");
 const router = express.Router();
+const multer = require('multer');
 const beritaController = require("../controllers/beritaController");
 const validateBeritaInput = require("../middlewares/validateBeritaInput");
 const upload = require("../middlewares/upload");
 const authMiddleware = require("../middlewares/authMiddleware");
 
+const upload = multer({ storage: multer.memoryStorage() });
 router.get("/beritas", authMiddleware, beritaController.getAllBeritas);
 router.get("/beritas/:id", authMiddleware, beritaController.getBeritaById);
 router.post(
