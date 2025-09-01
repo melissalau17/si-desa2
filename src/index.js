@@ -34,6 +34,23 @@ app.use(cors({
   credentials: true
 }));
 
+// Periksa apakah aplikasi berjalan di lingkungan lokal
+if (process.env.NODE_ENV !== 'production') {
+  allowedOrigins.push('http://localhost:3000');
+  allowedOrigins.push('http://localhost:8081');
+}
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('The CORS policy for this site does not allow access from the specified Origin.'), false);
+    }
+  },
+  credentials: true
+}));
+
 // Test route
 app.get("/api", (req, res) => {
   res.send("hello API");
