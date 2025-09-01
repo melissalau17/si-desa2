@@ -37,7 +37,11 @@ exports.getUserById = async (req, res) => {
                 message: `User dengan ID ${req.params.id} tidak ditemukan!`,
             });
         }
-        // Perbaiki status code dari 201 menjadi 200
+        
+        if (user.photo && user.photo.data) {
+            user.photo = Buffer.from(user.photo.data).toString('base64');
+        }
+
         res.status(200).json({
             message: `User dengan ID  ${req.params.id} berhasil dimuat!`,
             data: user,
