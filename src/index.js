@@ -19,41 +19,43 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 
+// Daftar origin yang diizinkan untuk produksi
+const allowedOrigins = [
+    'https://admin-sidesa.vercel.app',
+];
+
+// Tambahkan origin lokal jika aplikasi tidak di lingkungan produksi
+if (process.env.NODE_ENV !== 'production') {
+    allowedOrigins.push('http://localhost:3000');
+    allowedOrigins.push('http://localhost:8081');
+    allowedOrigins.push('exp://localhost:19000');
+    allowedOrigins.push('http://192.168.1.5:8081');
+}
+
 // Setup Socket.IO
 const io = new Server(server, {
-  cors: {
-    origin: "*", // Set this to your frontend origin if needed
-  },
+    cors: {
+        origin: allowedOrigins,
+    },
 });
 
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({
-  origin: "https://admin-sidesa.vercel.app",
-  credentials: true
-}));
-
-// Periksa apakah aplikasi berjalan di lingkungan lokal
-if (process.env.NODE_ENV !== 'production') {
-  allowedOrigins.push('http://localhost:3000');
-  allowedOrigins.push('http://localhost:8081');
-}
-
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error('The CORS policy for this site does not allow access from the specified Origin.'), false);
-    }
-  },
-  credentials: true
+    origin: function (origin, callback) {
+        if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            callback(new Error('The CORS policy for this site does not allow access from the specified Origin.'), false);
+        }
+    },
+    credentials: true
 }));
 
 // Test route
 app.get("/api", (req, res) => {
-  res.send("hello API");
+    res.send("hello API");
 });
 
 // API routes
@@ -64,27 +66,26 @@ app.use("/api/", laporanRoutes);
 app.use("/api/", suratRoutes);
 
 io.on("connection", (socket) => {
-  console.log("🔌 New client connected:", socket.id);
+    console.log("🔌 New client connected:", socket.id);
 
-  socket.emit("notification", {
-    title: "Welcome",
-    body: "Real-time connection established.",
-  });
+    socket.emit("notification", {
+        title: "Welcome",
+        body: "Real-time connection established.",
+    });
 
-  socket.on("client_event", (data) => {
-    console.log("Received from client:", data);
-  });
+    socket.on("client_event", (data) => {
+        console.log("Received from client:", data);
+    });
 
-  socket.on("disconnect", () => {
-    console.log("Client disconnected:", socket.id);
-  });
+    socket.on("disconnect", () => {
+        console.log("Client disconnected:", socket.id);
+    });
 });
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`API + Socket.IO running at http://0.0.0.0:${PORT}`);
+    console.log(`API + Socket.IO running at http://0.0.0.0:${PORT}`);
 });
-
 
 module.exports = { app, server, io };
 module.exports.handler = serverless(app);
