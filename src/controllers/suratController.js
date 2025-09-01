@@ -183,6 +183,15 @@ exports.updateSurat = async (req, res) => {
         if (!updatedSurat) {
             return res.status(404).json({ message: "Surat tidak ditemukan!" });
         }
+        
+        // Perbaikan: Kirim notifikasi jika status diperbarui menjadi 'Selesai'
+        if (status === 'Selesai') {
+          io.emit("notification", {
+              title: "Pembaruan Surat",
+              body: `Surat dengan ID ${req.params.id} telah disetujui.`,
+              time: moment().tz("Asia/Jakarta").format("YYYY-MM-DDTHH:mm:ss"),
+          });
+        }
 
         res.status(200).json({
             message: "Surat berhasil diperbarui!",

@@ -4,7 +4,7 @@ const jwt = require("jsonwebtoken");
 const userModel = require("../models/userModel");
 const { Buffer } = require("buffer");
 const { verifyPassword, hashPassword } = require("../utils/hash");
-const { io } = require("../index");
+const { io } = require("../index"); // Pastikan ini diimpor dengan benar
 
 const JWT_SECRET = process.env.JWT_SECRET || "rahasia_super_rahasia";
 
@@ -18,7 +18,8 @@ exports.getAllUsers = async (req, res) => {
             });
         }
 
-        res.status(201).json({
+        // Perbaiki status code dari 201 menjadi 200
+        res.status(200).json({
             message: "User berhasil dimuat!",
             data: users,
         });
@@ -36,7 +37,8 @@ exports.getUserById = async (req, res) => {
                 message: `User dengan ID ${req.params.id} tidak ditemukan!`,
             });
         }
-        res.status(201).json({
+        // Perbaiki status code dari 201 menjadi 200
+        res.status(200).json({
             message: `User dengan ID  ${req.params.id} berhasil dimuat!`,
             data: user,
         });
@@ -109,10 +111,11 @@ exports.createUser = async (req, res) => {
             role,
         });
 
+        // Tambahkan notifikasi
         io.emit("notification", {
             title: "Pengguna Baru!",
             message: `User ${nama} berhasil ditambahkan sebagai ${role}.`,
-            time: timestamp,
+            time: new Date(),
         });
 
         return res.status(201).json({
@@ -139,12 +142,10 @@ exports.updateUser = async (req, res) => {
             role,
         } = req.body;
 
-        // Validasi NIK jika ada perubahan
         if (NIK && !NIK.startsWith("120724")) {
             return res.status(403).json({ message: "Anda bukan warga desa ini!" });
         }
 
-        // Cek apakah NIK sudah digunakan oleh user lain
         if (NIK) {
             const existingUser = await userService.findByNIK(NIK);
             if (existingUser && existingUser.user_id != req.params.id) {
@@ -155,12 +156,11 @@ exports.updateUser = async (req, res) => {
         }
 
         let hashedPassword = undefined;
-        if (password) {
-            if (password.startsWith("$2b$")) {
-                hashedPassword = password;
-            } else {
-                hashedPassword = await hashPassword(password);
-            }
+        // Perbaikan: Hashing password setiap kali ada perubahan
+        if (password && !password.startsWith("$2b$")) {
+            hashedPassword = await hashPassword(password);
+        } else {
+            hashedPassword = password;
         }
 
         const photo = req.file ? req.file.buffer.toString("base64") : null;
@@ -206,28 +206,6 @@ exports.deleteUser = async (req, res) => {
     }
 };
 
-// exports.getAllUsers = async (req, res) => {
-//   try {
-//     const users = await userModel.findAll();
-//     res.json(users);
-//   } catch (error) {
-//     console.error("Error getAllUsers:", error);
-//     res.status(500).json({ message: "Gagal mengambil data user" });
-//   }
-// };
-
-// exports.getUserById = (id) => userModel.findById(id);
-
-// // Fungsi untuk mengubah Base64 ke binary
-// const convertBase64ToBinary = (base64String) => {
-//   const buffer = Buffer.from(base64String, "base64"); // Convert Base64 ke Binary
-//   return buffer;
-// };
-
-// exports.findByNIK = async (NIK) => {
-//   return await userModel.findByNIK(NIK);
-// };
-
 exports.loginUser = async (req, res) => {
     try {
         const { username, password, role } = req.body;
@@ -242,7 +220,6 @@ exports.loginUser = async (req, res) => {
             return res.status(401).json({ message: "Password salah!" });
         }
 
-        // Generate JWT token
         const token = jwt.sign(
             { user_id: user.user_id, role: user.role },
             JWT_SECRET,
@@ -264,6 +241,3 @@ exports.loginUser = async (req, res) => {
         return res.status(500).json({ message: "Terjadi kesalahan saat login." });
     }
 };
-
-
-

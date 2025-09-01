@@ -25,14 +25,15 @@ const allowedOrigins = [
     'http://localhost:3000',
     'http://localhost:8081',
     'exp://localhost:19000',
-    // Alamat IP lokal bisa berubah, jadi tambahkan ini untuk pengujian di perangkat fisik
     'http://192.168.1.5:8081',
+    'http://0.0.0.0:8081'
 ];
 
 // Setup Socket.IO
 const io = new Server(server, {
     cors: {
         origin: allowedOrigins,
+        methods: ["GET", "POST"]
     },
 });
 

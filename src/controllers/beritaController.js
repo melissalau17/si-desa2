@@ -13,8 +13,9 @@ exports.getAllBeritas = async (req, res) => {
             });
         }
 
-        res.status(201).json({
-            message: "Laporan berhasil dimuat!",
+        // Perbaikan: Ganti status code dari 201 menjadi 200
+        res.status(200).json({
+            message: "Berita berhasil dimuat!", // Perbaikan: ganti "Laporan" jadi "Berita"
             data: beritas,
         });
     } catch (error) {
@@ -31,8 +32,9 @@ exports.getBeritaById = async (req, res) => {
                 message: `Berita dengan ID ${req.params.id} tidak ditemukan!`,
             });
         }
-        res.status(201).json({
-            message: `berita dengan ID  ${req.params.id} berhasil dimuat!`,
+        // Perbaikan: Ganti status code dari 201 menjadi 200
+        res.status(200).json({
+            message: `Berita dengan ID ${req.params.id} berhasil dimuat!`,
             data: berita,
         });
     } catch (error) {
@@ -48,8 +50,7 @@ exports.createBerita = async (req, res) => {
             return res.status(400).json({ message: "Semua field harus diisi!" });
         }
 
-        // Ambil waktu sekarang dalam zona Asia/Jakarta (WIB) dan formatkan dalam ISO 8601
-        const tanggal = moment().tz("Asia/Jakarta").format("YYYY-MM-DDTHH:mm:ss"); // Tanpa 'Z' untuk zona WIB
+        const tanggal = moment().tz("Asia/Jakarta").toISOString();
 
         const photo = req.file ? req.file.buffer : undefined;
 
@@ -60,21 +61,22 @@ exports.createBerita = async (req, res) => {
         const newBerita = await beritaService.createBerita({
             judul,
             kategori,
-            tanggal, // Waktu yang sudah dalam format ISO-8601 tanpa 'Z' (WIB)
+            tanggal,
             kontent,
             status,
             photo,
         });
 
+        // Kirim notifikasi berita baru
+        // Perbaikan: Notifikasi hanya berisi informasi non-sensitif
         io.emit("notification", {
-            title: "Berita Baru!",
-            message: `Judul: ${judul}`,
-            kategori,
-            kontent,
-            tanggal,
+            title: "Berita Baru Diterbitkan!",
+            message: `Berita dengan judul "${judul}" telah diterbitkan.`,
+            time: tanggal,
         });
 
-        res.status(200).json({
+        // Perbaikan: Ganti status code dari 200 menjadi 201
+        res.status(201).json({
             message: "Berita berhasil dibuat!",
             data: newBerita,
         });
@@ -86,23 +88,34 @@ exports.createBerita = async (req, res) => {
 exports.updateBerita = async (req, res) => {
     try {
         const { judul, kategori, kontent, status } = req.body;
+        const oldBerita = await beritaService.getBeritaById(req.params.id);
 
-        // Ambil waktu sekarang dalam zona Asia/Jakarta (WIB)
-        const tanggal = moment().tz("Asia/Jakarta").format("YYYY-MM-DDTHH:mm:ss"); // Format waktu sesuai ISO-8601 tanpa 'Z'
+        if (!oldBerita) {
+            return res.status(404).json({ message: "Berita tidak ditemukan!" });
+        }
 
+        const tanggal = moment().tz("Asia/Jakarta").toISOString();
         const photo = req.file ? req.file.buffer : undefined;
 
-        const updatedBerita = await beritaService.updateBerita(req.params.id, {
+        const updatePayload = {
             judul,
             kategori,
-            tanggal, // Gunakan tanggal yang sudah diubah sesuai waktu sekarang
+            tanggal,
             kontent,
             status,
             photo,
-        });
+        };
 
-        if (!updatedBerita) {
-            return res.status(404).json({ message: "Berita tidak ditemukan!" });
+        const updatedBerita = await beritaService.updateBerita(req.params.id, updatePayload);
+
+        // Tambahkan notifikasi jika ada pembaruan
+        // Bandingkan status lama dan baru untuk menentukan apakah perlu notifikasi
+        if (oldBerita.status !== status || oldBerita.judul !== judul || oldBerita.kontent !== kontent) {
+            io.emit("notification", {
+                title: "Berita Diperbarui!",
+                message: `Berita "${judul}" telah diperbarui.`,
+                time: tanggal,
+            });
         }
 
         res.status(200).json({
