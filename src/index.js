@@ -19,18 +19,15 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 
-// Daftar origin yang diizinkan untuk produksi
+// Daftar origin yang diizinkan untuk pengembangan dan produksi
 const allowedOrigins = [
     'https://admin-sidesa.vercel.app',
+    'http://localhost:3000',
+    'http://localhost:8081',
+    'exp://localhost:19000',
+    // Alamat IP lokal bisa berubah, jadi tambahkan ini untuk pengujian di perangkat fisik
+    'http://192.168.1.5:8081',
 ];
-
-// Tambahkan origin lokal jika aplikasi tidak di lingkungan produksi
-if (process.env.NODE_ENV !== 'production') {
-    allowedOrigins.push('http://localhost:3000');
-    allowedOrigins.push('http://localhost:8081');
-    allowedOrigins.push('exp://localhost:19000');
-    allowedOrigins.push('http://192.168.1.5:8081');
-}
 
 // Setup Socket.IO
 const io = new Server(server, {
@@ -44,7 +41,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({
     origin: function (origin, callback) {
-        if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+        if (!origin || allowedOrigins.includes(origin)) {
             callback(null, true);
         } else {
             callback(new Error('The CORS policy for this site does not allow access from the specified Origin.'), false);
