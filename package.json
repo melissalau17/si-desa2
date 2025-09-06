@@ -22,6 +22,7 @@
         "buffer": "^6.0.3",
         "cors": "^2.8.5",
         "dotenv": "^16.6.1",
+        "expo-image-picker": "^16.1.4",
         "express": "^5.1.0",
         "joi": "^17.13.3",
         "jsonwebtoken": "^9.0.2",

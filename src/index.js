@@ -19,15 +19,7 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 
-// Daftar origin yang diizinkan untuk pengembangan dan produksi
-const allowedOrigins = [
-    'https://admin-sidesa.vercel.app',
-    'http://localhost:3000',
-    'http://localhost:8081',
-    'exp://localhost:19000',
-    'http://192.168.1.5:8081',
-    'http://0.0.0.0:8081'
-];
+const allowedOrigins = ['*'];
 
 // Setup Socket.IO
 const io = new Server(server, {
