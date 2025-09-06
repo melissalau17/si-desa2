@@ -19,14 +19,48 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 
-const allowedOrigins = ['*'];
+const allowedOrigins = [
+  "https://admin-sidesa.vercel.app", // production frontend
+];
 
-// Setup Socket.IO
-const io = new Server(server, {
-    cors: {
-        origin: allowedOrigins,
-        methods: ["GET", "POST"]
+// Middleware
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (
+        !origin || // mobile apps, curl, postman
+        allowedOrigins.includes(origin) || // exact whitelist
+        /^http:\/\/localhost(:\d+)?$/.test(origin) // ✅ allow any localhost with any port
+      ) {
+        callback(null, true);
+      } else {
+        callback(
+          new Error("CORS policy does not allow access from this origin."),
+          false
+        );
+      }
     },
+    credentials: true,
+  })
+);
+
+
+const io = new Server(server, {
+  cors: {
+    origin: (origin, callback) => {
+      if (
+        !origin ||
+        allowedOrigins.includes(origin) ||
+        /^http:\/\/localhost(:\d+)?$/.test(origin)
+      ) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS for Socket.IO"));
+      }
+    },
+    methods: ["GET", "POST"],
+    credentials: true,
+  },
 });
 
 // Middleware
