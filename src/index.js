@@ -20,17 +20,20 @@ const app = express();
 const server = http.createServer(app);
 
 const allowedOrigins = [
-  "https://admin-sidesa.vercel.app", // production frontend
+  "https://admin-sidesa.vercel.app", 
 ];
 
-// Middleware
+const localhostRegex = /^http:\/\/localhost(:\d+)?$/;
+const lanIpRegex = /^http:\/\/(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[0-1]))\d*(\.\d+)*(:\d+)?$/;
+
 app.use(
   cors({
     origin: function (origin, callback) {
       if (
-        !origin || // mobile apps, curl, postman
-        allowedOrigins.includes(origin) || // exact whitelist
-        /^http:\/\/localhost(:\d+)?$/.test(origin) // ✅ allow any localhost with any port
+        !origin || 
+        allowedOrigins.includes(origin) || 
+        localhostRegex.test(origin) || 
+        lanIpRegex.test(origin) 
       ) {
         callback(null, true);
       } else {
@@ -44,14 +47,14 @@ app.use(
   })
 );
 
-
 const io = new Server(server, {
   cors: {
     origin: (origin, callback) => {
       if (
         !origin ||
         allowedOrigins.includes(origin) ||
-        /^http:\/\/localhost(:\d+)?$/.test(origin)
+        localhostRegex.test(origin) ||
+        lanIpRegex.test(origin)
       ) {
         callback(null, true);
       } else {
