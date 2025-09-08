@@ -19,43 +19,52 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 
-const allowedOrigins = [
-  "https://admin-sidesa.vercel.app", 
-];
-
+// Allowed origins
+const allowedOrigins = ["https://admin-sidesa.vercel.app"];
 const localhostRegex = /^http:\/\/localhost(:\d+)?$/;
 const lanIpRegex = /^http:\/\/(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[0-1]))\d*(\.\d+)*(:\d+)?$/;
 
+// Middleware
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ limit: "50mb", extended: true }));
+
+// Consolidated CORS middleware
 app.use(
   cors({
-    origin: function (origin, callback) {
-      if (
-        !origin || 
-        allowedOrigins.includes(origin) || 
-        localhostRegex.test(origin) || 
-        lanIpRegex.test(origin) 
-      ) {
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin) || localhostRegex.test(origin) || lanIpRegex.test(origin)) {
         callback(null, true);
       } else {
-        callback(
-          new Error("CORS policy does not allow access from this origin."),
-          false
-        );
+        callback(new Error("CORS policy does not allow access from this origin."), false);
       }
     },
     credentials: true,
   })
 );
 
+// Test route
+app.get("/api", (req, res) => {
+  res.send("hello API");
+});
+
+// API routes with basic error handling
+app.use("/api/users", userRoutes);
+app.use("/api/keuangan", keuanganRoutes);
+app.use("/api/berita", beritaRoutes);
+app.use("/api/laporan", laporanRoutes);
+app.use("/api/surat", suratRoutes);
+
+// Generic error handler for unhandled routes or exceptions
+app.use((err, req, res, next) => {
+  console.error("Server error:", err);
+  res.status(500).json({ success: false, message: err.message || "Internal server error." });
+});
+
+// Socket.IO setup
 const io = new Server(server, {
   cors: {
     origin: (origin, callback) => {
-      if (
-        !origin ||
-        allowedOrigins.includes(origin) ||
-        localhostRegex.test(origin) ||
-        lanIpRegex.test(origin)
-      ) {
+      if (!origin || allowedOrigins.includes(origin) || localhostRegex.test(origin) || lanIpRegex.test(origin)) {
         callback(null, true);
       } else {
         callback(new Error("Not allowed by CORS for Socket.IO"));
@@ -66,53 +75,29 @@ const io = new Server(server, {
   },
 });
 
-// Middleware
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
-app.use(cors({
-    origin: function (origin, callback) {
-        if (!origin || allowedOrigins.includes(origin)) {
-            callback(null, true);
-        } else {
-            callback(new Error('The CORS policy for this site does not allow access from the specified Origin.'), false);
-        }
-    },
-    credentials: true
-}));
-
-// Test route
-app.get("/api", (req, res) => {
-    res.send("hello API");
-});
-
-// API routes
-app.use("/api/", userRoutes);
-app.use("/api/", keuanganRoutes);
-app.use("/api/", beritaRoutes);
-app.use("/api/", laporanRoutes);
-app.use("/api/", suratRoutes);
-
 io.on("connection", (socket) => {
-    console.log("🔌 New client connected:", socket.id);
+  console.log("🔌 New client connected:", socket.id);
 
-    socket.emit("notification", {
-        title: "Welcome",
-        body: "Real-time connection established.",
-    });
+  socket.emit("notification", {
+    title: "Welcome",
+    body: "Real-time connection established.",
+  });
 
-    socket.on("client_event", (data) => {
-        console.log("Received from client:", data);
-    });
+  socket.on("client_event", (data) => {
+    console.log("Received from client:", data);
+  });
 
-    socket.on("disconnect", () => {
-        console.log("Client disconnected:", socket.id);
-    });
+  socket.on("disconnect", () => {
+    console.log("Client disconnected:", socket.id);
+  });
 });
 
+// Start server
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, '0.0.0.0', () => {
-    console.log(`API + Socket.IO running at http://0.0.0.0:${PORT}`);
+server.listen(PORT, "0.0.0.0", () => {
+  console.log(`API + Socket.IO running at http://0.0.0.0:${PORT}`);
 });
 
+// Export for serverless
 module.exports = { app, server, io };
 module.exports.handler = serverless(app);
