@@ -20,10 +20,12 @@ const server = http.createServer(app);
 
 const allowedOrigins = [
   "https://admin-sidesa.vercel.app", 
+  "exp://",
 ];
 
 const localhostRegex = /^http:\/\/localhost(:\d+)?$/;
 const lanIpRegex = /^http:\/\/(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[0-1]))\d*(\.\d+)*(:\d+)?$/;
+const zeroHostRegex = /^http:\/\/0\.0\.0\.0(:\d+)?$/;
 
 // CORS setup
 app.use(
@@ -31,9 +33,10 @@ app.use(
     origin: function (origin, callback) {
       if (
         !origin ||
-        allowedOrigins.includes(origin) ||
+        allowedOrigins.some(o => origin.startsWith(o)) ||
         localhostRegex.test(origin) ||
-        lanIpRegex.test(origin)
+        lanIpRegex.test(origin) ||
+        zeroHostRegex.test(origin)
       ) {
         callback(null, true);
       } else {
