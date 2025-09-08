@@ -1,7 +1,18 @@
 const laporanModel = require("../models/laporanModel");
 const { Buffer } = require("buffer");
 
-exports.getAllLaporans = () => laporanModel.findAll();
+exports.getAllLaporans = async () => {
+  return await prisma.laporan.findMany({
+    include: {
+      user: {
+        select: {
+          no_hp: true,  
+          nama: true
+        }
+      }
+    }
+  });
+};
 
 exports.getLaporanById = (id) => laporanModel.findById(id);
 

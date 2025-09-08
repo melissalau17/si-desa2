@@ -9,80 +9,86 @@ datasource db {
 }
 
 model User {
-  user_id    Int     @id @default(autoincrement())
-  NIK        String  @unique
-  nama       String
-  no_hp      String
-  jenis_kel  String
-  alamat     String
-  agama      String
-  username   String
-  email      String?
-  password   String
-  photo      Bytes?
-  role       String  @default("penduduk")
+  user_id   Int     @id @default(autoincrement())
+  NIK       String  @unique(map: "User_NIK_key")
+  nama      String
+  no_hp     String
+  jenis_kel String
+  alamat    String
+  agama     String
+  username  String
+  password  String
+  photo     Bytes?
+  role      String  @default("penduduk")
+  email     String? @db.VarChar(255)
+
+  // back relation
+  laporans Laporan[]
 
   @@map("user")
 }
 
 model Keuangan {
- keuangan_id     Int    @id @default(autoincrement())
- jenisTransaksi  String
- keterangan      String
- kategori        String
- tanggal         DateTime
- jumlah          Decimal @db.Decimal(15, 2)
- catatan         String
+  keuangan_id    Int      @id @default(autoincrement())
+  jenisTransaksi String
+  keterangan     String
+  kategori       String
+  tanggal        DateTime
+  jumlah         Decimal  @db.Decimal(15, 2)
+  catatan        String
 
- @@map("keuangan")
+  @@map("keuangan")
 }
 
 model Berita {
-   berita_id   Int    @id @default(autoincrement())
- judul  String
- kategori        String
- photo      Bytes?
- tanggal         String?
- kontent   String
- status         String
+  berita_id Int     @id @default(autoincrement())
+  judul     String
+  kategori  String
+  photo     Bytes?
+  tanggal   String?
+  kontent   String
+  status    String
 
- @@map("berita")
+  @@map("berita")
 }
 
 model Laporan {
-   laporan_id Int     @id @default(autoincrement())
-  nama       String
+  laporan_id Int     @id @default(autoincrement())
   keluhan    String
   deskripsi  String
-  photo      Bytes?
+  photo      Bytes
   tanggal    String?
   lokasi     String
-  vote       Int? @default(0)
+  vote       Int?    @default(0)
   status     String
+
+  // relation
+  user_id Int
+  user    User   @relation(fields: [user_id], references: [user_id])
 
   @@map("laporan")
 }
 
 model Surat {
-  surat_id           Int      @id @default(autoincrement())
-  nama               String
-  nik                String
-  tempat_lahir       String?
-  tanggal_lahir      DateTime?
-  jenis_kelamin      String?
-  agama              String?
-  alamat             String
-  jenis_surat        String
-  tujuan_surat       String?
-  no_hp              String?
-  email              String?
-  photo_ktp          Bytes?
-  photo_kk           Bytes?
-  foto_usaha         Bytes?
-  waktu_kematian     String?
-  gaji_ortu          Bytes?
-  tanggal         DateTime   @default(now())
-  status             String?   @default("Menunggu")
+  surat_id       Int       @id @default(autoincrement())
+  nama           String
+  nik            String
+  tempat_lahir   String?
+  tanggal_lahir  DateTime? @db.Date
+  jenis_kelamin  String?
+  agama          String?
+  alamat         String
+  jenis_surat    String
+  tujuan_surat   String
+  photo_ktp      Bytes?
+  photo_kk       Bytes?
+  foto_usaha     Bytes?
+  waktu_kematian String?
+  gaji_ortu      Bytes?
+  tanggal        DateTime  @default(now())
+  status         String?   @db.VarChar(50)
+  no_hp          String?
+  email          String?   @default("")
 
   @@map("surat")
 }
