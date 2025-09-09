@@ -1,44 +1,41 @@
+// services/laporanService.js
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const { Buffer } = require("buffer");
 
-const convertBase64ToBinary = (base64String) => {
-  return Buffer.from(base64String, "base64");
-};
+// Convert Base64 string to binary
+const convertBase64ToBinary = (base64String) => Buffer.from(base64String, "base64");
 
+// ✅ Get all
 exports.getAllLaporans = async () => {
   return await prisma.laporan.findMany({
     include: {
       user: {
-        select: {
-          no_hp: true,
-          nama: true,
-        },
-      },
-    },
+        select: { no_hp: true, nama: true }
+      }
+    }
   });
 };
 
+// ✅ Get by ID
 exports.getLaporanById = async (id) => {
   return await prisma.laporan.findUnique({
     where: { laporan_id: parseInt(id) },
     include: {
       user: {
-        select: {
-          no_hp: true,
-          nama: true,
-        },
-      },
-    },
+        select: { no_hp: true, nama: true }
+      }
+    }
   });
 };
 
+// ✅ Create
 exports.createLaporan = async (data) => {
   const { nama, keluhan, photo, tanggal, deskripsi, lokasi, vote, status, user_id } = data;
 
   let photoBuffer = null;
   if (photo) {
-    photoBuffer = photo.includes("base64") 
+    photoBuffer = photo.includes("base64")
       ? convertBase64ToBinary(photo.split(",")[1])
       : photo;
   }
@@ -53,11 +50,12 @@ exports.createLaporan = async (data) => {
       vote: vote || 0,
       status,
       photo: photoBuffer,
-      user_id, 
-    },
+      user_id, // foreign key
+    }
   });
 };
 
+// ✅ Update
 exports.updateLaporan = async (id, data, base64Photo) => {
   const updateData = {
     nama: data.nama,
@@ -79,6 +77,7 @@ exports.updateLaporan = async (id, data, base64Photo) => {
   });
 };
 
+// ✅ Delete
 exports.deleteLaporan = async (id) => {
   return await prisma.laporan.delete({
     where: { laporan_id: parseInt(id) },
