@@ -21,6 +21,8 @@ const server = http.createServer(app);
 const allowedOrigins = [
   "https://admin-sidesa.vercel.app", 
   "exp://",
+  "exp+sistem-desa-mob://",
+  "sistem-desa-mob://",
 ];
 
 const localhostRegex = /^http:\/\/localhost(:\d+)?$/;
