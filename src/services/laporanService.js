@@ -20,6 +20,7 @@ exports.getAllLaporans = async () => {
   }));
 };
 
+
 exports.getLaporanById = (id) => laporanModel.findById(id);
 
 // Fungsi untuk mengubah Base64 ke binary
