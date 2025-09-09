@@ -3,23 +3,24 @@ const { handleError } = require("../utils/errorrHandler");
 const moment = require("moment-timezone");
 const { io } = require("../index"); // Pastikan ini sudah diimpor dengan benar
 
-exports.getAllLaporans = async (req, res) => {
-  try {
-    const laporans = await laporanService.getAllLaporans();
-    if (!laporans || laporans.length === 0) {
-      return res.status(200).json({ message: "Tidak ada data laporan tersedia!", data: [] });
-    }
+exports.getAllLaporans = async () => {
+  const laporans = await prisma.laporan.findMany({
+    include: {
+      user: {
+        select: {
+          no_hp: true,
+          nama: true,
+        },
+      },
+    },
+  });
 
-    res.status(200).json({
-      message: "Laporan berhasil dimuat!",
-      data: laporans,
-    });
-  } catch (error) {
-    console.error("Error fetching laporans:", error);
-    handleError(res, error);
-  }
+  return laporans.map((l) => ({
+    ...l,
+    user: l.user || { nama: "Unknown", no_hp: "" }, 
+    photo: l.photo ? l.photo.toString("base64") : null, 
+  }));
 };
-
 
 exports.getLaporanById = async (req, res) => {
     try {
