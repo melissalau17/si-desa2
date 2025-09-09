@@ -2,16 +2,22 @@ const laporanModel = require("../models/laporanModel");
 const { Buffer } = require("buffer");
 
 exports.getAllLaporans = async () => {
-  return await prisma.laporan.findMany({
+  const laporans = await prisma.laporan.findMany({
     include: {
       user: {
         select: {
-          no_hp: true,  
-          nama: true
-        }
-      }
-    }
+          no_hp: true,
+          nama: true,
+        },
+      },
+    },
   });
+
+  return laporans.map((laporan) => ({
+    ...laporan,
+    user: laporan.user || { nama: "Unknown", no_hp: "" },
+    photo: laporan.photo ? laporan.photo.toString("base64") : null,
+  }));
 };
 
 exports.getLaporanById = (id) => laporanModel.findById(id);
