@@ -4,22 +4,22 @@ const moment = require("moment-timezone");
 const { io } = require("../index"); // Pastikan ini sudah diimpor dengan benar
 
 exports.getAllLaporans = async (req, res) => {
-  try {
-    const laporans = await laporanService.getAllLaporans();
-    if (!laporans || laporans.length === 0) {
-      return res.status(200).json({ message: "Tidak ada data laporan tersedia!", data: [] });
+    try {
+        const laporans = await laporanService.getAllLaporans();
+        if (!laporans || laporans.length === 0) {
+            return res.status(200).json({
+                message: "Tidak ada data laporan tersedia!",
+                data: [],
+            });
+        }
+        res.status(200).json({
+            message: "Laporan berhasil dimuat!",
+            data: laporans,
+        });
+    } catch (error) {
+        handleError(res, error);
     }
-
-    res.status(200).json({
-      message: "Laporan berhasil dimuat!",
-      data: laporans,
-    });
-  } catch (error) {
-    console.error("Error fetching laporans:", error);
-    handleError(res, error);
-  }
 };
-
 
 exports.getLaporanById = async (req, res) => {
     try {
