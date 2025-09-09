@@ -63,8 +63,8 @@ model Laporan {
   status     String
 
   // relation
-  user_id Int
-  user    User   @relation(fields: [user_id], references: [user_id])
+  user_id Int?
+  user    User?   @relation(fields: [user_id], references: [user_id])
 
   @@map("laporan")
 }

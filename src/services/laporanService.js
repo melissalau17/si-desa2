@@ -17,7 +17,6 @@ exports.getAllLaporans = async () => {
   });
 };
 
-// ✅ Get by ID
 exports.getLaporanById = async (id) => {
   return await prisma.laporan.findUnique({
     where: { laporan_id: parseInt(id) },
@@ -29,7 +28,6 @@ exports.getLaporanById = async (id) => {
   });
 };
 
-// ✅ Create
 exports.createLaporan = async (data) => {
   const { nama, keluhan, photo, tanggal, deskripsi, lokasi, vote, status, user_id } = data;
 
@@ -55,7 +53,6 @@ exports.createLaporan = async (data) => {
   });
 };
 
-// ✅ Update
 exports.updateLaporan = async (id, data, base64Photo) => {
   const updateData = {
     nama: data.nama,
@@ -77,7 +74,6 @@ exports.updateLaporan = async (id, data, base64Photo) => {
   });
 };
 
-// ✅ Delete
 exports.deleteLaporan = async (id) => {
   return await prisma.laporan.delete({
     where: { laporan_id: parseInt(id) },

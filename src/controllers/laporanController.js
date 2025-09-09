@@ -42,13 +42,17 @@ exports.getLaporanById = async (req, res) => {
 
 exports.createLaporan = async (req, res) => {
     try {
-        const { nama, keluhan, deskripsi, lokasi, vote, photo: photoBase64 } = req.body;
+        const { nama, keluhan, deskripsi, lokasi, vote, user_id, photo: photoBase64 } = req.body;
 
         if (!nama || !lokasi || !keluhan || !deskripsi) {
             return res.status(400).json({ message: "Semua field harus diisi!" });
         }
 
-        const status = "Belum Dikerjakan"; // Gunakan konsisten: "Belum Dikerjakan"
+        if (!user_id) {
+            return res.status(400).json({ message: "User ID harus diisi!" });
+        }
+
+        const status = "Belum Dikerjakan";
         const tanggal = moment().tz("Asia/Jakarta").format("YYYY-MM-DDTHH:mm:ss");
 
         const data = {
@@ -57,16 +61,16 @@ exports.createLaporan = async (req, res) => {
             tanggal,
             lokasi,
             deskripsi,
-            vote: vote || 0, // Inisialisasi vote jika tidak ada
+            vote: vote || 0,
             status,
+            user_id: parseInt(user_id, 10), // 🔑 ensure Prisma gets an Int
             ...(photoBase64 && {
-                photo: Buffer.from(photoBase64.split(',')[1], 'base64'),
+                photo: Buffer.from(photoBase64.split(",")[1], "base64"),
             }),
         };
 
         const newLaporan = await laporanService.createLaporan(data);
 
-        // Tambahkan notifikasi laporan baru
         io.emit("notification", {
             title: "Laporan Baru",
             body: `${nama} mengirim laporan: ${keluhan}`,
@@ -81,6 +85,7 @@ exports.createLaporan = async (req, res) => {
         handleError(res, error);
     }
 };
+
 
 exports.updateLaporan = async (req, res) => {
     try {
