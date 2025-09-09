@@ -1,8 +1,13 @@
-const laporanModel = require("../models/laporanModel");
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 const { Buffer } = require("buffer");
 
+const convertBase64ToBinary = (base64String) => {
+  return Buffer.from(base64String, "base64");
+};
+
 exports.getAllLaporans = async () => {
-  const laporans = await prisma.laporan.findMany({
+  return await prisma.laporan.findMany({
     include: {
       user: {
         select: {
@@ -12,53 +17,51 @@ exports.getAllLaporans = async () => {
       },
     },
   });
-
-  return laporans.map((laporan) => ({
-    ...laporan,
-    user: laporan.user || { nama: "Unknown", no_hp: "" },
-    photo: laporan.photo ? laporan.photo.toString("base64") : null,
-  }));
 };
 
-
-exports.getLaporanById = (id) => laporanModel.findById(id);
-
-// Fungsi untuk mengubah Base64 ke binary
-const convertBase64ToBinary = (base64String) => {
-  const buffer = Buffer.from(base64String, "base64"); // Convert Base64 ke Binary
-  return buffer;
+exports.getLaporanById = async (id) => {
+  return await prisma.laporan.findUnique({
+    where: { laporan_id: parseInt(id) },
+    include: {
+      user: {
+        select: {
+          no_hp: true,
+          nama: true,
+        },
+      },
+    },
+  });
 };
 
 exports.createLaporan = async (data) => {
-  const { nama, keluhan, photo, tanggal, deskripsi, lokasi, vote, status } =
-    data;
+  const { nama, keluhan, photo, tanggal, deskripsi, lokasi, vote, status, user_id } = data;
 
-  // Jika ada foto, simpan foto sebagai Buffer atau path
   let photoBuffer = null;
   if (photo) {
-    photoBuffer = photo.file ? photo.file : photo; // Menyimpan foto sebagai Buffer
+    photoBuffer = photo.includes("base64") 
+      ? convertBase64ToBinary(photo.split(",")[1])
+      : photo;
   }
 
-  // Simpan berita ke dalam database
-  return laporanModel.create({
-    nama,
-    keluhan,
-    tanggal,
-    deskripsi,
-    lokasi,
-    vote,
-    status,
-    photo: photoBuffer, // Simpan foto sebagai Buffer
+  return await prisma.laporan.create({
+    data: {
+      nama,
+      keluhan,
+      tanggal,
+      deskripsi,
+      lokasi,
+      vote: vote || 0,
+      status,
+      photo: photoBuffer,
+      user_id, 
+    },
   });
 };
 
 exports.updateLaporan = async (id, data, base64Photo) => {
-  const existingLaporan = await laporanModel.findById(id);
-  if (!existingLaporan) return null;
   const updateData = {
     nama: data.nama,
     keluhan: data.keluhan,
-    photo: data.photo ?? existingLaporan.photo,
     tanggal: data.tanggal,
     deskripsi: data.deskripsi,
     lokasi: data.lokasi,
@@ -67,11 +70,17 @@ exports.updateLaporan = async (id, data, base64Photo) => {
   };
 
   if (base64Photo) {
-    updateData.photo = convertBase64ToBinary(base64Photo); // Convert Base64 ke Binary (BLOB)
+    updateData.photo = convertBase64ToBinary(base64Photo);
   }
-  //   console.log("UPDATE DATA YANG DIKIRIM KE PRISMA:", updateData);
 
-  return laporanModel.update(id, updateData);
+  return await prisma.laporan.update({
+    where: { laporan_id: parseInt(id) },
+    data: updateData,
+  });
 };
 
-exports.deleteLaporan = (id) => laporanModel.remove(id);
+exports.deleteLaporan = async (id) => {
+  return await prisma.laporan.delete({
+    where: { laporan_id: parseInt(id) },
+  });
+};
