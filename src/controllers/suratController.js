@@ -103,7 +103,7 @@ exports.createSurat = async (req, res) => {
             tanggal: moment().tz("Asia/Jakarta").toDate(),
         });
 
-        io.emit("notification", {
+        req.io.emit("notification", {
             title: "Surat Baru",
             body: `${nama} mengirim surat: ${jenis_surat}`,
             time: new Date(),

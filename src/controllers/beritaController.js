@@ -69,7 +69,7 @@ exports.createBerita = async (req, res) => {
 
         // Kirim notifikasi berita baru
         // Perbaikan: Notifikasi hanya berisi informasi non-sensitif
-        io.emit("notification", {
+        req.io.emit("notification", {
             title: "Berita Baru Diterbitkan!",
             message: `Berita dengan judul "${judul}" telah diterbitkan.`,
             time: tanggal,
