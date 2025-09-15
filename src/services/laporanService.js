@@ -1,81 +1,77 @@
-// services/laporanService.js
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const { Buffer } = require("buffer");
 
-// Convert Base64 string to binary
-const convertBase64ToBinary = (base64String) => Buffer.from(base64String, "base64");
-
-// ✅ Get all
 exports.getAllLaporans = async () => {
-  return await prisma.laporan.findMany({
-    include: {
-      user: {
-        select: { no_hp: true, nama: true }
-      }
-    }
-  });
+    return await prisma.laporan.findMany({
+        include: {
+            user: {
+                select: { no_hp: true, nama: true }
+            }
+        }
+    });
 };
 
 exports.getLaporanById = async (id) => {
-  return await prisma.laporan.findUnique({
-    where: { laporan_id: parseInt(id) },
-    include: {
-      user: {
-        select: { no_hp: true, nama: true }
-      }
-    }
-  });
+    return await prisma.laporan.findUnique({
+        where: { laporan_id: parseInt(id) },
+        include: {
+            user: {
+                select: { no_hp: true, nama: true }
+            }
+        }
+    });
 };
 
 exports.createLaporan = async (data) => {
-  const { nama, keluhan, photo, tanggal, deskripsi, lokasi, vote, status, user_id } = data;
+    const { nama, keluhan, photoUrl, tanggal, deskripsi, lokasi, vote, status, user_id } = data;
 
-  let photoBuffer = null;
-  if (photo) {
-    photoBuffer = photo.includes("base64")
-      ? convertBase64ToBinary(photo.split(",")[1])
-      : photo;
-  }
-
-  return await prisma.laporan.create({
-    data: {
-      nama,
-      keluhan,
-      tanggal,
-      deskripsi,
-      lokasi,
-      vote: vote || 0,
-      status,
-      photo: photoBuffer,
-      user_id, // foreign key
-    }
-  });
+    return await prisma.laporan.create({
+        data: {
+            nama,
+            keluhan,
+            tanggal,
+            deskripsi,
+            lokasi,
+            vote: vote || 0,
+            status,
+            photo: photoUrl,
+            user_id,
+        }
+    });
 };
 
-exports.updateLaporan = async (id, data, base64Photo) => {
-  const updateData = {
-    nama: data.nama,
-    keluhan: data.keluhan,
-    tanggal: data.tanggal,
-    deskripsi: data.deskripsi,
-    lokasi: data.lokasi,
-    vote: data.vote,
-    status: data.status,
-  };
+exports.updateLaporan = async (id, data) => {
+    const { photoUrl, ...updatePayload } = data;
 
-  if (base64Photo) {
-    updateData.photo = convertBase64ToBinary(base64Photo);
-  }
+    if (photoUrl) {
+        updatePayload.photo = photoUrl;
+    }
 
-  return await prisma.laporan.update({
-    where: { laporan_id: parseInt(id) },
-    data: updateData,
-  });
+    return await prisma.laporan.update({
+        where: { laporan_id: parseInt(id) },
+        data: updatePayload,
+    });
 };
 
 exports.deleteLaporan = async (id) => {
-  return await prisma.laporan.delete({
-    where: { laporan_id: parseInt(id) },
-  });
+    const laporan = await prisma.laporan.findUnique({
+        where: { laporan_id: parseInt(id) },
+        select: { photo: true }
+    });
+
+    if (laporan && laporan.photo) {
+        const photoUrl = laporan.photo;
+        const urlParts = photoUrl.split('/');
+        const key = urlParts.slice(4).join('/');
+
+        await r2Client.send(new DeleteObjectCommand({
+            Bucket: 'sistemdesa',
+            Key: key
+        }));
+    }
+
+    return await prisma.laporan.delete({
+        where: { laporan_id: parseInt(id) },
+    });
 };

@@ -1,4 +1,11 @@
+const express = require('express');
+const multer = require('multer');
+const r2Client = require('./r2Config'); 
+const { PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
 const Joi = require("joi");
+
+const router = express.Router();
+const upload = multer({ storage: multer.memoryStorage() });
 
 const beritaSchema = Joi.object({
   judul: Joi.string().required(),
@@ -6,33 +13,62 @@ const beritaSchema = Joi.object({
   tanggal: Joi.string().min(6).optional(),
   kontent: Joi.string().required(),
   status: Joi.string().required(),
-
-  // Validasi foto profil
-  photo: Joi.string()
-    .optional()
-    .custom((value, helpers) => {
-      // Cek apakah format Base64 valid
-      const base64Pattern = /^data:image\/(jpeg|png|jpg);base64,/;
-      if (!base64Pattern.test(value)) {
-        return helpers.message(
-          "Invalid photo format. Must be a base64 encoded image."
-        );
-      }
-      // Cek ukuran base64 (contohnya maksimal 10MB)
-      const base64Data = value.split(",")[1]; // Ambil bagian setelah "data:image/png;base64,"
-      if (Buffer.from(base64Data, "base64").length > 10 * 1024 * 1024) {
-        return helpers.message("Photo size must be less than 10MB.");
-      }
-      return value; // Jika valid, lanjutkan
-    }),
+  
+  photo: Joi.string().uri().optional().allow(null, ""),
 });
 
-const validateBeritaInput = (req, res, next) => {
-  const { error } = beritaSchema.validate(req.body);
-  if (error) {
-    return res.status(400).json({ message: error.message });
-  }
-  next();
-};
+router.post('/berita', upload.single('photo'), async (req, res) => {
+    let photoUrl = null;
+    let fileName = null;
 
-module.exports = validateBeritaInput;
+    try {
+        if (req.file) {
+            fileName = `berita-photos/${Date.now()}-${req.file.originalname}`;
+            const params = {
+                Bucket: 'sistemdesa',
+                Key: fileName,
+                Body: req.file.buffer,
+                ContentType: req.file.mimetype,
+            };
+
+            await r2Client.send(new PutObjectCommand(params));
+            photoUrl = `https://4cdb39fc96619271522ab6d0b5cb7df6.r2.cloudflarestorage.com/sistemdesa/${fileName}`;
+        }
+
+        const beritaData = { ...req.body, photo: photoUrl };
+
+        const { error } = beritaSchema.validate(beritaData);
+
+        if (error) {
+            if (fileName) {
+                await r2Client.send(new DeleteObjectCommand({
+                    Bucket: 'sistemdesa',
+                    Key: fileName
+                }));
+                console.error("Validation failed, uploaded file cleaned up.");
+            }
+            return res.status(400).json({ message: error.details[0].message });
+        }
+        
+        // At this point, the data is valid.
+        // Save the news article data to your database.
+        // await db.saveBerita(beritaData);
+
+        res.status(201).json({ 
+            message: 'Berita created successfully', 
+            data: beritaData 
+        });
+
+    } catch (err) {
+        if (fileName) {
+            await r2Client.send(new DeleteObjectCommand({
+                Bucket: 'sistemdesa',
+                Key: fileName
+            }));
+        }
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
+});
+
+module.exports = router;

@@ -1,7 +1,6 @@
 const suratService = require("../services/suratService");
 const { handleError } = require("../utils/errorrHandler");
 const moment = require("moment-timezone");
-const { io } = require("../index");
 const chromium = require("@sparticuz/chromium");
 const puppeteer = require("puppeteer-core");
 const suratTemplate = require("../templates/suratTemplate");
@@ -186,7 +185,7 @@ exports.updateSurat = async (req, res) => {
         
         // Perbaikan: Kirim notifikasi jika status diperbarui menjadi 'Selesai'
         if (status === 'Selesai') {
-          io.emit("notification", {
+          req.io.emit("notification", {
               title: "Pembaruan Surat",
               body: `Surat dengan ID ${req.params.id} telah disetujui.`,
               time: moment().tz("Asia/Jakarta").format("YYYY-MM-DDTHH:mm:ss"),

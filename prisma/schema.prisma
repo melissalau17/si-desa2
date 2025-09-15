@@ -18,8 +18,8 @@ model User {
   agama     String
   username  String
   password  String
-  photo     Bytes?
-  role      String  @default("penduduk")
+  photo     String? @db.VarChar(255)
+  role      String  
   email     String? @db.VarChar(255)
 
   // back relation
@@ -44,7 +44,7 @@ model Berita {
   berita_id Int     @id @default(autoincrement())
   judul     String
   kategori  String
-  photo     Bytes?
+  photo     String? @db.VarChar(255)
   tanggal   String?
   kontent   String
   status    String
@@ -56,7 +56,7 @@ model Laporan {
   laporan_id Int     @id @default(autoincrement())
   keluhan    String
   deskripsi  String
-  photo      Bytes
+  photo      String? @db.VarChar(255)
   tanggal    String?
   lokasi     String
   vote       Int?    @default(0)
@@ -80,11 +80,11 @@ model Surat {
   alamat         String
   jenis_surat    String
   tujuan_surat   String
-  photo_ktp      Bytes?
-  photo_kk       Bytes?
-  foto_usaha     Bytes?
+  photo_ktp      String?  @db.VarChar(255)
+  photo_kk       String?  @db.VarChar(255)
+  foto_usaha     String?  @db.VarChar(255)
   waktu_kematian String?
-  gaji_ortu      Bytes?
+  gaji_ortu      String?
   tanggal        DateTime  @default(now())
   status         String?   @db.VarChar(50)
   no_hp          String?

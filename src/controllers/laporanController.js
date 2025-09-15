@@ -1,7 +1,6 @@
 const laporanService = require("../services/laporanService");
 const { handleError } = require("../utils/errorrHandler");
 const moment = require("moment-timezone");
-const { io } = require("../index"); // Pastikan ini sudah diimpor dengan benar
 
 exports.getAllLaporans = async (req, res) => {
     try {
@@ -71,7 +70,7 @@ exports.createLaporan = async (req, res) => {
 
         const newLaporan = await laporanService.createLaporan(data);
 
-        io.emit("notification", {
+        req.io.emit("notification", {
             title: "Laporan Baru",
             body: `${nama} mengirim laporan: ${keluhan}`,
             time: tanggal,
@@ -117,7 +116,7 @@ exports.updateLaporan = async (req, res) => {
         
         // Cek jika status berubah dan kirim notifikasi jika diperlukan
         if (updatedLaporan.status !== oldLaporan.status) {
-            io.emit("notification", {
+            req.io.emit("notification", {
                 title: "Pembaruan Laporan",
                 body: `Status laporan "${updatedLaporan.keluhan}" telah diperbarui menjadi: ${updatedLaporan.status}`,
                 time: tanggal,

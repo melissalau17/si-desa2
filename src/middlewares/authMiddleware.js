@@ -15,7 +15,7 @@ const authMiddleware = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = decoded; // simpan payload token ke request agar bisa dipakai route selanjutnya
+    req.user = decoded;
     next();
   } catch (error) {
     return res

@@ -4,7 +4,6 @@ const jwt = require("jsonwebtoken");
 const userModel = require("../models/userModel");
 const { Buffer } = require("buffer");
 const { verifyPassword, hashPassword } = require("../utils/hash");
-const { io } = require("../index"); // Pastikan ini diimpor dengan benar
 
 const JWT_SECRET = process.env.JWT_SECRET || "rahasia_super_rahasia";
 
@@ -116,7 +115,7 @@ exports.createUser = async (req, res) => {
         });
 
         // Tambahkan notifikasi
-        io.emit("notification", {
+        req.io.emit("notification", {
             title: "Pengguna Baru!",
             message: `User ${nama} berhasil ditambahkan sebagai ${role}.`,
             time: new Date(),

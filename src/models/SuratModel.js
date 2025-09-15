@@ -1,15 +1,12 @@
 const prisma = require("../prisma/prismaClient");
 
-// Ambil semua data surat
 exports.findAll = () => prisma.surat.findMany();
 
-// Ambil surat berdasarkan ID
 exports.findById = (id) =>
   prisma.surat.findUnique({
     where: { surat_id: Number(id) },
   });
 
-// Buat surat baru
 exports.create = ({
   nik,
   nama,

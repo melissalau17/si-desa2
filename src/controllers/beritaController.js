@@ -1,7 +1,6 @@
 const beritaService = require("../services/beritaService");
 const { handleError } = require("../utils/errorrHandler");
 const moment = require("moment-timezone");
-const { io } = require("../index");
 
 exports.getAllBeritas = async (req, res) => {
     try {
@@ -13,9 +12,8 @@ exports.getAllBeritas = async (req, res) => {
             });
         }
 
-        // Perbaikan: Ganti status code dari 201 menjadi 200
         res.status(200).json({
-            message: "Berita berhasil dimuat!", // Perbaikan: ganti "Laporan" jadi "Berita"
+            message: "Berita berhasil dimuat!", 
             data: beritas,
         });
     } catch (error) {
@@ -111,7 +109,7 @@ exports.updateBerita = async (req, res) => {
         // Tambahkan notifikasi jika ada pembaruan
         // Bandingkan status lama dan baru untuk menentukan apakah perlu notifikasi
         if (oldBerita.status !== status || oldBerita.judul !== judul || oldBerita.kontent !== kontent) {
-            io.emit("notification", {
+            req.io.emit("notification", {
                 title: "Berita Diperbarui!",
                 message: `Berita "${judul}" telah diperbarui.`,
                 time: tanggal,

@@ -1,45 +1,11 @@
+const express = require('express');
+const multer = require('multer');
+const r2Client = require('./r2Config');
+const { PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
 const Joi = require("joi");
 
-const allowedMimeTypes = [
-    "image/jpeg",
-    "image/png",
-    "image/jpg",
-    "application/pdf",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // .docx
-    "application/msword", // .doc
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // .xlsx
-    "application/vnd.ms-excel", // .xls
-];
-
-const base64Pattern = /^data:([a-zA-Z0-9\/\.\-]+);base64,/;
-
-const validateBase64File = (fieldName) =>
-    Joi.string()
-        .optional()
-        .custom((value, helpers) => {
-            const match = value.match(base64Pattern);
-            if (!match) {
-                return helpers.message(
-                    `${fieldName} harus berupa data Base64 yang valid.`
-                );
-            }
-
-            const mimeType = match[1];
-            if (!allowedMimeTypes.includes(mimeType)) {
-                return helpers.message(
-                    `Tipe file ${fieldName} '${mimeType}' tidak didukung.`
-                );
-            }
-
-            const base64Data = value.split(",")[1];
-            if (Buffer.from(base64Data, "base64").length > 10 * 1024 * 1024) {
-                return helpers.message(
-                    `Ukuran file ${fieldName} harus kurang dari 10MB.`
-                );
-            }
-
-            return value;
-        });
+const router = express.Router();
+const upload = multer({ storage: multer.memoryStorage() });
 
 const suratSchema = Joi.object({
     nik: Joi.string().required(),
@@ -49,14 +15,12 @@ const suratSchema = Joi.object({
         .optional()
         .allow(null, "")
         .custom((value, helpers) => {
-            if (!value) return value
-
-            const regex = /^\d{2}-\d{2}-\d{4}$/
+            if (!value) return value;
+            const regex = /^\d{2}-\d{2}-\d{4}$/;
             if (!regex.test(value)) {
-                return helpers.error("any.invalid")
+                return helpers.error("any.invalid");
             }
-
-            return value
+            return value;
         }),
     no_hp: Joi.string().optional().allow(null, ""),
     email: Joi.string().optional().allow(null, ""),
@@ -65,21 +29,78 @@ const suratSchema = Joi.object({
     alamat: Joi.string().required(),
     tujuan_surat: Joi.string().required(),
     jenis_surat: Joi.string().required(),
-    waktu_kematian: Joi.string().optional(), // bisa juga null
-
-    // Optional file fields in Base64 format
-    photo_ktp: validateBase64File("photo_ktp"),
-    photo_kk: validateBase64File("photo_kk"),
-    foto_usaha: validateBase64File("foto_usaha"),
-    gaji_ortu: validateBase64File("gaji_ortu"),
+    waktu_kematian: Joi.string().optional(),
+    
+    photo_ktp: Joi.string().uri().optional().allow(null, ""),
+    photo_kk: Joi.string().uri().optional().allow(null, ""),
+    foto_usaha: Joi.string().uri().optional().allow(null, ""),
+    gaji_ortu: Joi.string().uri().optional().allow(null, ""),
 });
 
-const validateSuratInput = (req, res, next) => {
-    const { error } = suratSchema.validate(req.body);
-    if (error) {
-        return res.status(400).json({ message: error.message });
-    }
-    next();
+const uploadFields = upload.fields([
+    { name: 'photo_ktp', maxCount: 1 },
+    { name: 'photo_kk', maxCount: 1 },
+    { name: 'foto_usaha', maxCount: 1 },
+    { name: 'gaji_ortu', maxCount: 1 },
+]);
+
+const uploadToR2 = async (file) => {
+    if (!file) return null;
+    const fileName = `${file.fieldname}/${Date.now()}-${file.originalname}`;
+    const params = {
+        Bucket: 'sistemdesa',
+        Key: fileName,
+        Body: file.buffer,
+        ContentType: file.mimetype,
+    };
+    await r2Client.send(new PutObjectCommand(params));
+    return `https://4cdb39fc96619271522ab6d0b5cb7df6.r2.cloudflarestorage.com/sistemdesa/${fileName}`;
 };
 
-module.exports = validateSuratInput;
+const deleteFromR2 = async (key) => {
+    if (!key) return;
+    const params = {
+        Bucket: 'sistemdesa',
+        Key: key,
+    };
+    await r2Client.send(new DeleteObjectCommand(params));
+};
+
+router.post('/surat', uploadFields, async (req, res) => {
+    let uploadedFileUrls = {};
+    let uploadedFileKeys = {};
+
+    try {
+        const uploadPromises = Object.keys(req.files).map(async (key) => {
+            const file = req.files[key][0];
+            const url = await uploadToR2(file);
+            uploadedFileUrls[key] = url;
+            uploadedFileKeys[key] = `${file.fieldname}/${Date.now()}-${file.originalname}`;
+        });
+        await Promise.all(uploadPromises);
+
+        const suratData = { ...req.body, ...uploadedFileUrls };
+        
+        const { error } = suratSchema.validate(suratData);
+
+        if (error) {
+            const deletePromises = Object.values(uploadedFileKeys).map(deleteFromR2);
+            await Promise.all(deletePromises);
+            return res.status(400).json({ message: error.details[0].message });
+        }
+        
+        // At this point, all data is valid
+        // Save `suratData` to your database
+        // await db.saveSurat(suratData);
+
+        res.status(201).json({ message: 'Surat data created successfully', data: suratData });
+
+    } catch (err) {
+        const deletePromises = Object.values(uploadedFileKeys).map(deleteFromR2);
+        await Promise.all(deletePromises);
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
+});
+
+module.exports = router;

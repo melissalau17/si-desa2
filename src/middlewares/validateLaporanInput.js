@@ -1,4 +1,11 @@
 const Joi = require("joi");
+const express = require('express');
+const multer = require('multer');
+const r2Client = require('./r2Config'); 
+const { PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
+
+const router = express.Router();
+const upload = multer({ storage: multer.memoryStorage() });
 
 const laporanSchema = Joi.object({
   nama: Joi.string().required(),
@@ -8,35 +15,62 @@ const laporanSchema = Joi.object({
   tanggal: Joi.string().optional(),
   vote: Joi.number().integer().optional().default(0),
   status: Joi.string().optional(),
-
-  photo: Joi.string()
-  .optional()
-  .custom((value, helpers) => {
-    if (!value) return value; // Allow undefined/null
-
-    // Cek apakah format Base64 valid
-    const base64Pattern = /^data:image\/(jpeg|png|jpg);base64,/;
-    if (!base64Pattern.test(value)) {
-      return helpers.message(
-        "Invalid photo format. Must be a base64 encoded image."
-      );
-    }
-
-    const base64Data = value.split(",")[1]; // Ambil bagian setelah "data:image/png;base64,"
-    if (Buffer.from(base64Data, "base64").length > 10 * 1024 * 1024) {
-      return helpers.message("Photo size must be less than 10MB.");
-    }
-
-    return value; 
-  }),
+  photo: Joi.string().uri().optional().allow(null, ""),
 });
 
-const validateLaporanInput = (req, res, next) => {
-  const { error } = laporanSchema.validate(req.body);
-  if (error) {
-    return res.status(400).json({ message: error.message });
-  }
-  next();
-};
+router.post('/laporan', upload.single('photo'), async (req, res) => {
+    let photoUrl = null;
+    let fileName = null;
 
-module.exports = validateLaporanInput;
+    try {
+        if (req.file) {
+            fileName = `laporan-photos/${Date.now()}-${req.file.originalname}`;
+            
+            const params = {
+                Bucket: 'sistemdesa',
+                Key: fileName,
+                Body: req.file.buffer,
+                ContentType: req.file.mimetype,
+            };
+
+            await r2Client.send(new PutObjectCommand(params));
+            
+            photoUrl = `https://4cdb39fc96619271522ab6d0b5cb7df6.r2.cloudflarestorage.com/sistemdesa/${fileName}`;
+        }
+
+        const laporanData = { ...req.body, photo: photoUrl };
+
+        const { error } = laporanSchema.validate(laporanData);
+
+        if (error) {
+            if (fileName) {
+                await r2Client.send(new DeleteObjectCommand({ 
+                    Bucket: 'sistemdesa', 
+                    Key: fileName 
+                }));
+            }
+            return res.status(400).json({ message: error.details[0].message });
+        }
+        
+        // At this point, the data is valid.
+        // You can now save `laporanData` to your database.
+        // await db.saveLaporan(laporanData);
+
+        res.status(201).json({ 
+            message: 'Laporan submitted successfully', 
+            data: laporanData 
+        });
+
+    } catch (err) {
+        if (fileName) {
+            await r2Client.send(new DeleteObjectCommand({ 
+                Bucket: 'sistemdesa', 
+                Key: fileName 
+            }));
+        }
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
+});
+
+module.exports = router;

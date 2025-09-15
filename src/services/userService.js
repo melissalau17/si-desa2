@@ -1,110 +1,123 @@
 const userModel = require("../models/userModel");
-const { hashPassword } = require("../utils/hash");
+const { hashPassword, verifyPassword } = require("../utils/hashUtils");
 const { createError } = require("../utils/errorrHandler");
-const { Buffer } = require("buffer");
-const { comparePassword } = require("../utils/hashUtils");
-
-const bcrypt = require("bcryptjs");
+const r2Client = require('../r2Config');
+const { DeleteObjectCommand } = require('@aws-sdk/client-s3');
 
 exports.getAllUsers = () => userModel.findAll();
 
 exports.getUserById = (id) => userModel.findById(id);
 
-const convertBase64ToBinary = (base64String) => {
-  const buffer = Buffer.from(base64String, "base64"); 
-  return buffer;
-};
-
 exports.findByNIK = async (NIK) => {
-  return await userModel.findByNIK(NIK);
+    return await userModel.findByNIK(NIK);
 };
 
 exports.createUser = async (data) => {
-  const {
-    nama,
-    username,
-    email,
-    password,
-    photo,
-    NIK,
-    agama,
-    alamat,
-    jenis_kel,
-    no_hp,
-    role,
-  } = data;
+    const {
+        nama,
+        username,
+        email,
+        password,
+        photoUrl,
+        NIK,
+        agama,
+        alamat,
+        jenis_kel,
+        no_hp,
+        role,
+    } = data;
 
-  // Hash password
-  const hashedPassword = await hashPassword(password);
-  // Jika ada foto, simpan foto sebagai Buffer atau path
-  let photoBuffer = null;
-  if (photo) {
-    photoBuffer = photo.file ? photo.file : photo; // Menyimpan foto sebagai Buffer
-  }
+    const hashedPassword = await hashPassword(password);
 
-  // Simpan user ke dalam database
-  return userModel.create({
-    nama,
-    username,
-    email,
-    password: hashedPassword,
-    photo: photoBuffer, // Simpan foto sebagai Buffer
-    NIK,
-    agama,
-    alamat,
-    jenis_kel,
-    no_hp,
-    role,
-  });
+    return userModel.create({
+        nama,
+        username,
+        email,
+        password: hashedPassword,
+        photo: photoUrl,
+        NIK,
+        agama,
+        alamat,
+        jenis_kel,
+        no_hp,
+        role,
+    });
 };
 
-exports.updateUser = async (id, data, base64Photo) => {
-  const existingUser = await userModel.findById(id);
-  if (!existingUser) return null;
-  const updateData = {
-    nama: data.nama,
-    username: data.username,
-    email: data.email,
-    password: data.password,
-    photo: data.photo ?? existingUser.photo,
-    NIK: data.NIK,
-    agama: data.agama,
-    alamat: data.alamat,
-    jenis_kel: data.jenis_kel,
-    no_hp: data.no_hp,
-    role: data.role,
-  };
+exports.updateUser = async (id, data, photoUrl) => {
+    const existingUser = await userModel.findById(id);
+    if (!existingUser) return null;
 
-  if (data.password) {
-    updateData.password = await hashPassword(data.password);
-  }
+    const updateData = {
+        nama: data.nama,
+        username: data.username,
+        email: data.email,
+        NIK: data.NIK,
+        agama: data.agama,
+        alamat: data.alamat,
+        jenis_kel: data.jenis_kel,
+        no_hp: data.no_hp,
+        role: data.role,
+    };
 
-  if (base64Photo) {
-    updateData.photo = convertBase64ToBinary(base64Photo); // Convert Base64 ke Binary (BLOB)
-  }
+    if (data.password) {
+        updateData.password = await hashPassword(data.password);
+    }
 
-  return userModel.update(id, updateData);
+    if (photoUrl) {
+        if (existingUser.photo) {
+            const oldPhotoKey = existingUser.photo.split('/').slice(4).join('/');
+            await r2Client.send(new DeleteObjectCommand({
+                Bucket: 'sistemdesa',
+                Key: oldPhotoKey
+            }));
+        }
+        updateData.photo = photoUrl;
+    } else if (data.photo === null) {
+        if (existingUser.photo) {
+            const oldPhotoKey = existingUser.photo.split('/').slice(4).join('/');
+            await r2Client.send(new DeleteObjectCommand({
+                Bucket: 'sistemdesa',
+                Key: oldPhotoKey
+            }));
+        }
+        updateData.photo = null;
+    } else {
+        updateData.photo = existingUser.photo;
+    }
+
+    return userModel.update(id, updateData);
 };
 
-exports.deleteUser = (id) => userModel.remove(id);
+exports.deleteUser = async (id) => {
+    const user = await userModel.findById(id);
+    if (!user) return null;
+
+    if (user.photo) {
+        const photoKey = user.photo.split('/').slice(4).join('/');
+        await r2Client.send(new DeleteObjectCommand({
+            Bucket: 'sistemdesa',
+            Key: photoKey
+        }));
+    }
+
+    return userModel.remove(id);
+};
 
 exports.loginUser = async (identifier, password, role) => {
-  // Cari user berdasarkan username atau email
-  const user = await userModel.findByUsernameOrEmail(identifier);
-  if (!user) {
-    throw new Error("Email atau username tidak ditemukan!");
-  }
+    const user = await userModel.findByUsernameOrEmail(identifier);
+    if (!user) {
+        throw createError("Email atau username tidak ditemukan!", 404);
+    }
 
-  // Validasi role
-  if (user.role !== role) {
-    throw new Error("Role tidak cocok!");
-  }
+    if (user.role !== role) {
+        throw createError("Role tidak cocok!", 403);
+    }
 
-  // Cek password
-  const isMatch = await verifyPassword(password, user.password);
-  if (!isMatch) {
-    throw new Error("Password salah!");
-  }
+    const isMatch = await verifyPassword(password, user.password);
+    if (!isMatch) {
+        throw createError("Password salah!", 401);
+    }
 
-  return user;
+    return user;
 };
