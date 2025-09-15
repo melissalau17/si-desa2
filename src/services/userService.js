@@ -1,8 +1,9 @@
 const userModel = require("../models/userModel");
 const { hashPassword, verifyPassword } = require("../utils/hashUtils");
-const { createError } = require("../utils/errorrHandler");
+const { createError } = require("../utils/errorHandler");
 const r2Client = require('../r2Config');
 const { DeleteObjectCommand } = require('@aws-sdk/client-s3');
+const { verifyPassword } = require("../utils/hash");
 
 exports.getAllUsers = () => userModel.findAll();
 
@@ -109,15 +110,15 @@ exports.loginUser = async (identifier, password, role) => {
     if (!user) {
         throw createError("Email atau username tidak ditemukan!", 404);
     }
-
+    
     if (user.role !== role) {
         throw createError("Role tidak cocok!", 403);
     }
-
+    
     const isMatch = await verifyPassword(password, user.password);
     if (!isMatch) {
         throw createError("Password salah!", 401);
     }
-
+    
     return user;
 };

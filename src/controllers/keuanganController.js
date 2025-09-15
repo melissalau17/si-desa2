@@ -1,5 +1,5 @@
 const keuanganService = require("../services/keuanganService");
-const { handleError } = require("../utils/errorrHandler");
+const { handleError } = require("../utils/errorHandler");
 
 exports.createKeuangan = async (req, res) => {
   try {

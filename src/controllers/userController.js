@@ -1,9 +1,10 @@
 const userService = require("../services/userService");
-const { handleError } = require("../utils/errorrHandler");
+const { handleError } = require("../utils/errorHandler");
 const jwt = require("jsonwebtoken");
 const userModel = require("../models/userModel");
-const { Buffer } = require("buffer");
-const { verifyPassword, hashPassword } = require("../utils/hash");
+const R2Service = require("../services/r2Service"); // Assuming R2 service
+const NotificationService = require("../services/notificationService"); // Your Notification service
+const { hashPassword } = require("../utils/hash");
 
 const JWT_SECRET = process.env.JWT_SECRET || "rahasia_super_rahasia";
 
@@ -16,8 +17,7 @@ exports.getAllUsers = async (req, res) => {
                 data: [],
             });
         }
-
-        // Perbaiki status code dari 201 menjadi 200
+        // The service should now return user data with a photo_url field
         res.status(200).json({
             message: "User berhasil dimuat!",
             data: users,
@@ -30,19 +30,14 @@ exports.getAllUsers = async (req, res) => {
 exports.getUserById = async (req, res) => {
     try {
         const user = await userService.getUserById(req.params.id);
-
         if (!user) {
             return res.status(404).json({
                 message: `User dengan ID ${req.params.id} tidak ditemukan!`,
             });
         }
-        
-        if (user.photo && user.photo.data) {
-            user.photo = Buffer.from(user.photo.data).toString('base64');
-        }
-
+        // The photo field should now be a URL string
         res.status(200).json({
-            message: `User dengan ID  ${req.params.id} berhasil dimuat!`,
+            message: `User dengan ID ${req.params.id} berhasil dimuat!`,
             data: user,
         });
     } catch (error) {
@@ -52,42 +47,17 @@ exports.getUserById = async (req, res) => {
 
 exports.createUser = async (req, res) => {
     try {
-        const {
-            nama,
-            username,
-            email,
-            password,
-            NIK,
-            agama,
-            alamat,
-            jenis_kel,
-            no_hp,
-            role,
-        } = req.body;
+        const { nama, username, email, password, NIK, agama, alamat, jenis_kel, no_hp, role } = req.body;
+        const photo = req.file;
 
-        console.log("Request Body:", req.body);
-        if (
-            !nama ||
-            !username ||
-            !password ||
-            !NIK ||
-            !agama ||
-            !alamat ||
-            !jenis_kel ||
-            !no_hp ||
-            !role
-        ) {
+        if (!nama || !username || !password || !NIK || !agama || !alamat || !jenis_kel || !no_hp || !role) {
             return res.status(400).json({ message: "Semua field harus diisi!" });
         }
-
         if (!NIK.startsWith("120724")) {
             return res.status(403).json({ message: "Anda bukan warga desa ini!" });
         }
-
         if (typeof password !== "string" || password.length < 6) {
-            return res
-                .status(400)
-                .json({ message: "Password harus minimal 6 karakter!" });
+            return res.status(400).json({ message: "Password harus minimal 6 karakter!" });
         }
 
         const existingUser = await userService.findByNIK(NIK);
@@ -95,31 +65,18 @@ exports.createUser = async (req, res) => {
             return res.status(409).json({ message: "NIK sudah digunakan!" });
         }
 
-        const photoBase64 = req.body.photo;
-        const photo = photoBase64
-            ? Buffer.from(photoBase64.split(",")[1], "base64")
-            : null;
+        let photoUrl = null;
+        if (photo) {
+            photoUrl = await R2Service.uploadFile(photo.buffer, photo.mimetype);
+        }
 
         const newUser = await userService.createUser({
-            nama,
-            username,
-            email,
-            password,
-            photo,
-            NIK,
-            agama,
-            alamat,
-            jenis_kel,
-            no_hp,
-            role,
+            nama, username, email, password, NIK, agama, alamat, jenis_kel, no_hp, role,
+            photo_url: photoUrl,
         });
 
-        // Tambahkan notifikasi
-        req.io.emit("notification", {
-            title: "Pengguna Baru!",
-            message: `User ${nama} berhasil ditambahkan sebagai ${role}.`,
-            time: new Date(),
-        });
+        // Use the notification service to send a notification
+        await NotificationService.sendUserRegistrationNotification(newUser);
 
         return res.status(201).json({
             message: "User berhasil dibuat!",
@@ -132,18 +89,8 @@ exports.createUser = async (req, res) => {
 
 exports.updateUser = async (req, res) => {
     try {
-        const {
-            nama,
-            email,
-            username,
-            password,
-            NIK,
-            agama,
-            alamat,
-            jenis_kel,
-            no_hp,
-            role,
-        } = req.body;
+        const { nama, email, username, password, NIK, agama, alamat, jenis_kel, no_hp, role } = req.body;
+        const photo = req.file;
 
         if (NIK && !NIK.startsWith("120724")) {
             return res.status(403).json({ message: "Anda bukan warga desa ini!" });
@@ -152,35 +99,23 @@ exports.updateUser = async (req, res) => {
         if (NIK) {
             const existingUser = await userService.findByNIK(NIK);
             if (existingUser && existingUser.user_id != req.params.id) {
-                return res
-                    .status(409)
-                    .json({ message: "NIK sudah digunakan oleh user lain!" });
+                return res.status(409).json({ message: "NIK sudah digunakan oleh user lain!" });
             }
         }
 
-        let hashedPassword = undefined;
-        // Perbaikan: Hashing password setiap kali ada perubahan
-        if (password && !password.startsWith("$2b$")) {
-            hashedPassword = await hashPassword(password);
-        } else {
-            hashedPassword = password;
+        let hashedPassword = password ? await hashPassword(password) : undefined;
+        let photoUrl = null;
+        if (photo) {
+            photoUrl = await R2Service.uploadFile(photo.buffer, photo.mimetype);
         }
 
-        const photo = req.file ? req.file.buffer.toString("base64") : null;
+        const updatePayload = {
+            nama, username, email, NIK, agama, alamat, jenis_kel, no_hp, role,
+            ...(hashedPassword && { password: hashedPassword }),
+            ...(photoUrl && { photo_url: photoUrl }),
+        };
 
-        const updatedUser = await userService.updateUser(req.params.id, {
-            nama,
-            username,
-            email,
-            password: hashedPassword,
-            photo,
-            NIK,
-            agama,
-            alamat,
-            jenis_kel,
-            no_hp,
-            role,
-        });
+        const updatedUser = await userService.updateUser(req.params.id, updatePayload);
 
         if (!updatedUser) {
             return res.status(404).json({ message: "User tidak ditemukan!" });
@@ -202,7 +137,6 @@ exports.deleteUser = async (req, res) => {
         if (!deleted) {
             return res.status(404).json({ message: "User tidak ditemukan!" });
         }
-
         res.status(200).json({ message: "User berhasil dihapus!" });
     } catch (error) {
         handleError(res, error);
@@ -212,16 +146,7 @@ exports.deleteUser = async (req, res) => {
 exports.loginUser = async (req, res) => {
     try {
         const { username, password, role } = req.body;
-
-        const user = await userModel.findUserByUsernameOrEmailAndRole(username, role);
-        if (!user) {
-            return res.status(404).json({ message: "Username atau role tidak cocok!" });
-        }
-
-        const isMatch = await verifyPassword(password, user.password);
-        if (!isMatch) {
-            return res.status(401).json({ message: "Password salah!" });
-        }
+        const user = await userService.login(username, password, role);
 
         const token = jwt.sign(
             { user_id: user.user_id, role: user.role },
@@ -241,6 +166,6 @@ exports.loginUser = async (req, res) => {
         });
     } catch (error) {
         console.error("Login error:", error);
-        return res.status(500).json({ message: "Terjadi kesalahan saat login." });
+        return res.status(401).json({ message: "Username, password, atau role salah!" });
     }
 };

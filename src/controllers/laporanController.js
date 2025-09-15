@@ -1,6 +1,8 @@
 const laporanService = require("../services/laporanService");
-const { handleError } = require("../utils/errorrHandler");
+const { handleError } = require("../utils/errorHandler");
 const moment = require("moment-timezone");
+const R2Service = require("../services/r2Service"); 
+const NotificationService = require("../services/notificationService");
 
 exports.getAllLaporans = async (req, res) => {
     try {
@@ -29,7 +31,6 @@ exports.getLaporanById = async (req, res) => {
                 message: `Laporan dengan ID ${req.params.id} tidak ditemukan!`,
             });
         }
-        // Perbaikan: Ubah status code dari 201 menjadi 200
         res.status(200).json({
             message: `Laporan dengan ID ${req.params.id} berhasil dimuat!`,
             data: laporan,
@@ -41,18 +42,23 @@ exports.getLaporanById = async (req, res) => {
 
 exports.createLaporan = async (req, res) => {
     try {
-        const { nama, keluhan, deskripsi, lokasi, vote, user_id, photo: photoBase64 } = req.body;
+        const { nama, keluhan, deskripsi, lokasi, vote, user_id } = req.body;
+        const photo = req.file;
 
         if (!nama || !lokasi || !keluhan || !deskripsi) {
             return res.status(400).json({ message: "Semua field harus diisi!" });
         }
-
         if (!user_id) {
             return res.status(400).json({ message: "User ID harus diisi!" });
+        }
+        if (!photo) {
+            return res.status(400).json({ message: "Foto harus diunggah!" });
         }
 
         const status = "Belum Dikerjakan";
         const tanggal = moment().tz("Asia/Jakarta").format("YYYY-MM-DDTHH:mm:ss");
+
+        const photoUrl = await R2Service.uploadFile(photo.buffer, photo.mimetype);
 
         const data = {
             nama,
@@ -62,19 +68,13 @@ exports.createLaporan = async (req, res) => {
             deskripsi,
             vote: vote || 0,
             status,
-            user_id: parseInt(user_id, 10), // 🔑 ensure Prisma gets an Int
-            ...(photoBase64 && {
-                photo: Buffer.from(photoBase64.split(",")[1], "base64"),
-            }),
+            user_id: parseInt(user_id, 10),
+            photo: photoUrl,
         };
 
         const newLaporan = await laporanService.createLaporan(data);
 
-        req.io.emit("notification", {
-            title: "Laporan Baru",
-            body: `${nama} mengirim laporan: ${keluhan}`,
-            time: tanggal,
-        });
+        await NotificationService.sendLaporanNotification(newLaporan);
 
         res.status(201).json({
             message: "Laporan berhasil dibuat!",
@@ -89,17 +89,18 @@ exports.createLaporan = async (req, res) => {
 exports.updateLaporan = async (req, res) => {
     try {
         const { nama, deskripsi, lokasi, keluhan, vote, status } = req.body;
-
-        // Ambil data laporan lama untuk membandingkan status
         const oldLaporan = await laporanService.getLaporanById(req.params.id);
         if (!oldLaporan) {
             return res.status(404).json({ message: "Laporan tidak ditemukan!" });
         }
 
         const tanggal = moment().tz("Asia/Jakarta").format("YYYY-MM-DDTHH:mm:ss");
+        let photoUrl = oldLaporan.photo; 
 
-        // Perbaikan: Tangani foto dari req.file
-        const photo = req.file ? req.file.buffer : null;
+        if (req.file) {
+            const newPhoto = req.file;
+            photoUrl = await R2Service.uploadFile(newPhoto.buffer, newPhoto.mimetype);
+        }
 
         const updatePayload = {
             nama,
@@ -107,20 +108,15 @@ exports.updateLaporan = async (req, res) => {
             tanggal,
             lokasi,
             keluhan,
-            vote,
+            vote: parseInt(vote, 10) || oldLaporan.vote,
             status,
-            ...(photo && { photo: photo }), // Tambahkan foto jika ada
+            photo: photoUrl,
         };
 
         const updatedLaporan = await laporanService.updateLaporan(req.params.id, updatePayload);
         
-        // Cek jika status berubah dan kirim notifikasi jika diperlukan
         if (updatedLaporan.status !== oldLaporan.status) {
-            req.io.emit("notification", {
-                title: "Pembaruan Laporan",
-                body: `Status laporan "${updatedLaporan.keluhan}" telah diperbarui menjadi: ${updatedLaporan.status}`,
-                time: tanggal,
-            });
+            await NotificationService.sendLaporanStatusNotification(updatedLaporan);
         }
 
         res.status(200).json({

@@ -1,10 +1,8 @@
 const suratService = require("../services/suratService");
-const { handleError } = require("../utils/errorrHandler");
+const { handleError } = require("../utils/errorHandler");
+const R2Service = require("../services/r2Service");
+const NotificationService = require("../services/notificationService"); 
 const moment = require("moment-timezone");
-const chromium = require("@sparticuz/chromium");
-const puppeteer = require("puppeteer-core");
-const suratTemplate = require("../templates/suratTemplate");
-const QRCode = require("qrcode");
 
 exports.getAllSurat = async (req, res) => {
     try {
@@ -43,71 +41,39 @@ exports.getSuratById = async (req, res) => {
 
 exports.createSurat = async (req, res) => {
     try {
-        const {
-            nik,
-            nama,
-            tempat_lahir,
-            tanggal_lahir,
-            jenis_kelamin,
-            agama,
-            alamat,
-            no_hp,
-            email,
-            jenis_surat,
-            tujuan_surat,
-            waktu_kematian,
-        } = req.body;
-
-        if (!nik.startsWith("120724")) {
-            return res.status(403).json({ message: "Anda bukan warga desa ini!" });
-        }
-
-        const photo_ktp = req.files?.photo_ktp?.[0]?.buffer || null;
-        const photo_kk = req.files?.photo_kk?.[0]?.buffer || null;
-        const foto_usaha = req.files?.foto_usaha?.[0]?.buffer || null;
-        const gaji_ortu = req.files?.gaji_ortu?.[0]?.buffer || null;
+        const { nik, nama, tempat_lahir, tanggal_lahir, jenis_kelamin, agama, alamat, no_hp, email, jenis_surat, tujuan_surat, waktu_kematian } = req.body;
+        
+        const photo_ktp = req.files?.photo_ktp?.[0];
+        const photo_kk = req.files?.photo_kk?.[0];
+        const foto_usaha = req.files?.foto_usaha?.[0];
+        const gaji_ortu = req.files?.gaji_ortu?.[0];
 
         if (!photo_ktp || !photo_kk) {
             return res.status(400).json({ message: "KTP dan KK wajib diunggah!" });
         }
+        
+        const photo_ktp_url = await R2Service.uploadFile(photo_ktp.buffer, photo_ktp.mimetype);
+        const photo_kk_url = await R2Service.uploadFile(photo_kk.buffer, photo_kk.mimetype);
+        const foto_usaha_url = foto_usaha ? await R2Service.uploadFile(foto_usaha.buffer, foto_usaha.mimetype) : null;
+        const gaji_ortu_url = gaji_ortu ? await R2Service.uploadFile(gaji_ortu.buffer, gaji_ortu.mimetype) : null;
 
         let parsedTanggalLahir = null;
         if (tanggal_lahir) {
             const m = moment.tz(tanggal_lahir, "DD-MM-YYYY", "Asia/Jakarta");
             if (!m.isValid()) {
-                return res
-                    .status(400)
-                    .json({ message: "Format tanggal_lahir tidak valid!" });
+                return res.status(400).json({ message: "Format tanggal_lahir tidak valid!" });
             }
             parsedTanggalLahir = m.add(1, "day").toDate();
         }
 
         const newSurat = await suratService.createSurat({
-            nik,
-            nama,
-            tempat_lahir,
-            tanggal_lahir: parsedTanggalLahir,
-            jenis_kelamin,
-            agama,
-            alamat,
-            jenis_surat,
-            tujuan_surat,
-            waktu_kematian,
-            photo_ktp,
-            photo_kk,
-            no_hp,
-            email,
-            foto_usaha,
-            gaji_ortu,
+            nik, nama, tempat_lahir, tanggal_lahir: parsedTanggalLahir, jenis_kelamin, agama, alamat, no_hp, email, jenis_surat, tujuan_surat, waktu_kematian,
+            photo_ktp_url, photo_kk_url, foto_usaha_url, gaji_ortu_url,
             tanggal: moment().tz("Asia/Jakarta").toDate(),
         });
-
-        req.io.emit("notification", {
-            title: "Surat Baru",
-            body: `${nama} mengirim surat: ${jenis_surat}`,
-            time: new Date(),
-        });
-
+        
+        await NotificationService.sendSuratNotification(newSurat);
+        
         res.status(201).json({
             message: "Surat berhasil dibuat!",
             data: newSurat,
@@ -119,77 +85,37 @@ exports.createSurat = async (req, res) => {
 
 exports.updateSurat = async (req, res) => {
     try {
-        const {
-            nik,
-            nama,
-            tempat_lahir,
-            tanggal_lahir,
-            jenis_kelamin,
-            agama,
-            alamat,
-            no_hp,
-            email,
-            jenis_surat,
-            tujuan_surat,
-            waktu_kematian,
-            status
-        } = req.body;
+        const { nik, nama, tempat_lahir, tanggal_lahir, jenis_kelamin, agama, alamat, no_hp, email, jenis_surat, tujuan_surat, waktu_kematian, status } = req.body;
+        
+        const oldSurat = await suratService.getSuratById(req.params.id);
+        if (!oldSurat) return res.status(404).json({ message: "Surat tidak ditemukan!" });
 
-        const photo_ktp = req.files?.photo_ktp?.[0]?.buffer || null;
-        const photo_kk = req.files?.photo_kk?.[0]?.buffer || null;
-        const foto_usaha = req.files?.foto_usaha?.[0]?.buffer || null;
-        const gaji_ortu = req.files?.gaji_ortu?.[0]?.buffer || null;
+        const photo_ktp = req.files?.photo_ktp?.[0];
+        const photo_kk = req.files?.photo_kk?.[0];
+        const foto_usaha = req.files?.foto_usaha?.[0];
+        const gaji_ortu = req.files?.gaji_ortu?.[0];
 
-        if (nik && !nik.startsWith("120724")) {
-            return res.status(403).json({ message: "Anda bukan warga desa ini!" });
-        }
+        let photo_ktp_url = photo_ktp ? await R2Service.uploadFile(photo_ktp.buffer, photo_ktp.mimetype) : oldSurat.photo_ktp_url;
+        let photo_kk_url = photo_kk ? await R2Service.uploadFile(photo_kk.buffer, photo_kk.mimetype) : oldSurat.photo_kk_url;
+        let foto_usaha_url = foto_usaha ? await R2Service.uploadFile(foto_usaha.buffer, foto_usaha.mimetype) : oldSurat.foto_usaha_url;
+        let gaji_ortu_url = gaji_ortu ? await R2Service.uploadFile(gaji_ortu.buffer, gaji_ortu.mimetype) : oldSurat.gaji_ortu_url;
 
         let parsedTanggalLahir = null;
         if (tanggal_lahir && typeof tanggal_lahir === "string" && tanggal_lahir.trim() !== "") {
-            parsedTanggalLahir = moment
-                .tz(tanggal_lahir, "DD/MM/YYYY", "Asia/Jakarta")
-                .add(1, "day")
-                .toDate();
-
-            if (isNaN(parsedTanggalLahir.getTime())) {
-                return res.status(400).json({ message: "Format tanggal_lahir tidak valid!" });
-            }
+            parsedTanggalLahir = moment.tz(tanggal_lahir, "DD/MM/YYYY", "Asia/Jakarta").add(1, "day").toDate();
+            if (isNaN(parsedTanggalLahir.getTime())) return res.status(400).json({ message: "Format tanggal_lahir tidak valid!" });
         }
 
-        const updatePayload = {};
-
-        if (nik) updatePayload.nik = nik;
-        if (nama) updatePayload.nama = nama;
-        if (tempat_lahir) updatePayload.tempat_lahir = tempat_lahir;
-        if (parsedTanggalLahir) updatePayload.tanggal_lahir = parsedTanggalLahir;
-        if (jenis_kelamin) updatePayload.jenis_kelamin = jenis_kelamin;
-        if (no_hp) updatePayload.no_hp = no_hp;
-        if (email) updatePayload.email = email;
-        if (agama) updatePayload.agama = agama;
-        if (alamat) updatePayload.alamat = alamat;
-        if (jenis_surat) updatePayload.jenis_surat = jenis_surat;
-        if (tujuan_surat) updatePayload.tujuan_surat = tujuan_surat;
-        if (waktu_kematian) updatePayload.waktu_kematian = waktu_kematian;
-        if (status) updatePayload.status = status;
-
-        if (photo_ktp) updatePayload.photo_ktp = photo_ktp;
-        if (photo_kk) updatePayload.photo_kk = photo_kk;
-        if (foto_usaha) updatePayload.foto_usaha = foto_usaha;
-        if (gaji_ortu) updatePayload.gaji_ortu = gaji_ortu;
+        const updatePayload = {
+            nik, nama, tempat_lahir, tanggal_lahir: parsedTanggalLahir, jenis_kelamin, agama, alamat, no_hp, email, jenis_surat, tujuan_surat, waktu_kematian, status,
+            photo_ktp_url, photo_kk_url, foto_usaha_url, gaji_ortu_url,
+        };
 
         const updatedSurat = await suratService.updateSurat(req.params.id, updatePayload);
-
-        if (!updatedSurat) {
-            return res.status(404).json({ message: "Surat tidak ditemukan!" });
-        }
+        if (!updatedSurat) return res.status(404).json({ message: "Surat tidak ditemukan!" });
         
-        // Perbaikan: Kirim notifikasi jika status diperbarui menjadi 'Selesai'
-        if (status === 'Selesai') {
-          req.io.emit("notification", {
-              title: "Pembaruan Surat",
-              body: `Surat dengan ID ${req.params.id} telah disetujui.`,
-              time: moment().tz("Asia/Jakarta").format("YYYY-MM-DDTHH:mm:ss"),
-          });
+        if (status && oldSurat.status !== updatedSurat.status) {
+            await NotificationService.sendSuratStatusNotification(updatedSurat);
         }
 
         res.status(200).json({
@@ -204,10 +130,7 @@ exports.updateSurat = async (req, res) => {
 exports.deleteSurat = async (req, res) => {
     try {
         const deleted = await suratService.deleteSurat(req.params.id);
-        if (!deleted) {
-            return res.status(404).json({ message: "Surat tidak ditemukan!" });
-        }
-
+        if (!deleted) return res.status(404).json({ message: "Surat tidak ditemukan!" });
         res.status(200).json({ message: "Surat berhasil dihapus!" });
     } catch (error) {
         handleError(res, error);
@@ -217,41 +140,11 @@ exports.deleteSurat = async (req, res) => {
 exports.printSurat = async (req, res) => {
     try {
         const suratId = req.params.id;
-        const suratDataFromDB = await suratService.getSuratById(suratId);
+        const pdfBuffer = await PdfService.generateSuratPdf(suratId);
         
-        if (!suratDataFromDB) {
-            return res.status(404).send("Surat tidak ditemukan!");
-        }
-
-        const suratData = {
-            nama: suratDataFromDB.nama || 'Tidak Tersedia',
-            nik: suratDataFromDB.nik || 'Tidak Tersedia',
-            tempat_lahir: suratDataFromDB.tempat_lahir || 'Tidak Tersedia',
-            tanggal_lahir: suratDataFromDB.tanggal_lahir ? moment(suratDataFromDB.tanggal_lahir).format("DD-MM-YYYY") : 'Tidak Tersedia',
-            alamat: suratDataFromDB.alamat || 'Tidak Tersedia',
-            jenis_surat: suratDataFromDB.jenis_surat || 'Tidak Tersedia',
-            tujuan_surat: suratDataFromDB.tujuan_surat || 'Tidak Tersedia',
-            tanggal: suratDataFromDB.tanggal ? moment(suratDataFromDB.tanggal).format("DD MMMM YYYY") : 'Tidak Tersedia',
-            kepala_desa: "Sutrisno",
-            qrCodeUrl: await QRCode.toDataURL(
-                `https://desa-maju-jaya.go.id/verifikasi/${suratDataFromDB.nik || 'Tidak Tersedia'}`
-            ),
-        };
-
-        const html = suratTemplate(suratData);
-        const browser = await puppeteer.launch({
-            args: chromium.args,
-            executablePath: await chromium.executablePath(),
-            headless: chromium.headless,
-        });
-        const page = await browser.newPage();
-        await page.setContent(html, { waitUntil: "networkidle0" });
-        const pdfBuffer = await page.pdf({ format: "A4" });
-        await browser.close();
-
         res.set({
             "Content-Type": "application/pdf",
-            "Content-Disposition": `inline; filename="surat-${suratData.nama}.pdf"`,
+            "Content-Disposition": `inline; filename="surat-${suratId}.pdf"`,
         });
         res.send(pdfBuffer);
     } catch (err) {
