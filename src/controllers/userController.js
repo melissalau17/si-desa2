@@ -48,6 +48,7 @@ exports.createUser = async (req, res) => {
     try {
         const { nama, username, email, password, NIK, agama, alamat, jenis_kel, no_hp, role } = req.body;
         const photo = req.file;
+        const socket = req.app.get('socketio');
 
         if (!nama || !username || !password || !NIK || !agama || !alamat || !jenis_kel || !no_hp || !role) {
             return res.status(400).json({ message: "Semua field harus diisi!" });
@@ -79,7 +80,7 @@ exports.createUser = async (req, res) => {
         });
 
         // Use the notification service to send a notification
-        await NotificationService.sendUserRegistrationNotification(newUser);
+        await NotificationService.sendUserRegistrationNotification(newUser, socket);
 
         return res.status(201).json({
             message: "User berhasil dibuat!",

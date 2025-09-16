@@ -53,23 +53,18 @@ exports.sendBeritaNotification = async (berita) => {
     }
 };
 
-exports.sendUserRegistrationNotification = async (user) => {
-    io.emit("notification", {
-        title: "Pengguna Baru Terdaftar!",
-        message: `Pengguna ${user.nama} berhasil didaftarkan.`,
-        time: new Date(),
-    });
-
-    // Notify mobile admins
-    try {
-        const adminUsers = await db.user.findMany({
-            where: { role: "admin" },
+exports.sendUserRegistrationNotification = async (user, socket) => {
+    if (socket) {
+        socket.emit("notification", {
+            title: "Pendaftaran User Baru",
+            body: `User baru dengan nama ${user.nama} telah mendaftar.`,
+            time: new Date(),
         });
+    } else {
+        console.error("Socket not available, skipping notification.");
+    }
 
-        const fcmTokens = adminUsers
-            .map((admin) => admin.fcmToken)
-            .filter(Boolean);
-
+    try {
         const payload = {
             title: "Pengguna Baru",
             body: `Pengguna ${user.nama} telah terdaftar sebagai ${user.role}.`,
