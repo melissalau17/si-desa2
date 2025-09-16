@@ -30,7 +30,7 @@ const suratSchema = Joi.object({
     tujuan_surat: Joi.string().required(),
     jenis_surat: Joi.string().required(),
     waktu_kematian: Joi.string().optional(),
-    
+
     photo_ktp: Joi.string().uri().optional().allow(null, ""),
     photo_kk: Joi.string().uri().optional().allow(null, ""),
     foto_usaha: Joi.string().uri().optional().allow(null, ""),
@@ -46,15 +46,21 @@ const uploadFields = upload.fields([
 
 const uploadToR2 = async (file) => {
     if (!file) return null;
-    fileName = `${file.fieldname}/${Date.now()}-${file.originalname}`;
+    const fileKey = `surat-photos/${Date.now()}-${file.originalname}`;
     const params = {
         Bucket: 'sistemdesa',
-        Key: fileName,
+        Key: fileKey,
         Body: file.buffer,
         ContentType: file.mimetype,
     };
-    await r2Client.send(new PutObjectCommand(params));
-    return `https://sistemdesa.4cdb39fc96619271522ab6d0b5cb7df6.r2.cloudflarestorage.com/sistemdesa/${fileName}`;
+    try {
+        await r2Client.send(new PutObjectCommand(params));
+        const fileUrl = `https://sistemdesa.4cdb39fc96619271522ab6d0b5cb7df6.r2.cloudflarestorage.com/${fileKey}`;
+        return { url: fileUrl, key: fileKey };
+    } catch (error) {
+        console.error('Error uploading file to R2:', error);
+        throw new Error('Failed to upload file to R2');
+    }
 };
 
 const deleteFromR2 = async (key) => {
@@ -67,28 +73,29 @@ const deleteFromR2 = async (key) => {
 };
 
 router.post('/surat', uploadFields, async (req, res) => {
-    let uploadedFileUrls = {};
-    let uploadedFileKeys = {};
-
+    const uploadedFiles = {};
     try {
         const uploadPromises = Object.keys(req.files).map(async (key) => {
             const file = req.files[key][0];
-            const url = await uploadToR2(file);
-            uploadedFileUrls[key] = url;
-            uploadedFileKeys[key] = `${file.fieldname}/${Date.now()}-${file.originalname}`;
+            const result = await uploadToR2(file);
+            uploadedFiles[key] = result;
         });
         await Promise.all(uploadPromises);
 
-        const suratData = { ...req.body, ...uploadedFileUrls };
-        
+        const suratData = { ...req.body };
+        Object.keys(uploadedFiles).forEach(key => {
+            suratData[key] = uploadedFiles[key].url;
+        });
+
         const { error } = suratSchema.validate(suratData);
 
         if (error) {
-            const deletePromises = Object.values(uploadedFileKeys).map(deleteFromR2);
+            const deletePromises = Object.values(uploadedFiles).map(file => deleteFromR2(file.key));
             await Promise.all(deletePromises);
+            console.error("Validation failed, cleaning up uploaded file.");
             return res.status(400).json({ message: error.details[0].message });
         }
-        
+
         // At this point, all data is valid
         // Save `suratData` to your database
         // await db.saveSurat(suratData);
@@ -96,8 +103,6 @@ router.post('/surat', uploadFields, async (req, res) => {
         res.status(201).json({ message: 'Surat data created successfully', data: suratData });
 
     } catch (err) {
-        const deletePromises = Object.values(uploadedFileKeys).map(deleteFromR2);
-        await Promise.all(deletePromises);
         console.error(err);
         res.status(500).send('Server Error');
     }
