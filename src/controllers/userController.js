@@ -64,9 +64,13 @@ exports.createUser = async (req, res) => {
             return res.status(409).json({ message: "NIK sudah digunakan!" });
         }
 
+        console.log("Received photo object:", req.file);
+
         let photoUrl = null;
-        if (photo) {
-            photoUrl = await R2Service.uploadFile(photo.buffer, photo.mimetype);
+        if (req.file) {
+            console.log("Attempting to upload file to R2...");
+            photoUrl = await R2Service.uploadFile(req.file.buffer, req.file.mimetype);
+            console.log("File uploaded successfully. URL:", photoUrl);
         }
 
         const newUser = await userService.createUser({
@@ -82,6 +86,7 @@ exports.createUser = async (req, res) => {
             data: newUser,
         });
     } catch (error) {
+        console.error("Internal Server Error in createUser:", error);
         handleError(res, error);
     }
 };
