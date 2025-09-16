@@ -1,6 +1,4 @@
 const { S3Client } = require("@aws-sdk/client-s3");
-const AWS = require('aws-sdk');
-
 
 const accountId = process.env.CLOUDFLARE_ACCOUNT_ID; 
 const accessKeyId = process.env.CLOUDFLARE_R2_ACCESS_KEY_ID;

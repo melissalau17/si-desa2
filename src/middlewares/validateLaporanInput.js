@@ -1,7 +1,7 @@
 const Joi = require("joi");
 const express = require('express');
 const multer = require('multer');
-const r2Client = require('./r2Config'); 
+const r2Client = require('../r2Config'); 
 const { PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
 
 const router = express.Router();
