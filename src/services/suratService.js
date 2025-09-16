@@ -117,14 +117,10 @@ exports.deleteUser = async (id) => {
   return userModel.remove(id);
 };
 
-exports.loginUser = async (identifier, password, role) => {
+exports.loginUser = async (identifier, password) => {
   const user = await userModel.findByUsernameOrEmail(identifier);
   if (!user) {
     throw createError("Email atau username tidak ditemukan!", 404);
-  }
-  
-  if (user.role !== role) {
-    throw createError("Role tidak cocok!", 403);
   }
 
   const isMatch = await verifyPassword(password, user.password);

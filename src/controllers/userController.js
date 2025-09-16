@@ -145,11 +145,11 @@ exports.deleteUser = async (req, res) => {
 
 exports.loginUser = async (req, res) => {
     try {
-        const { username, password, role } = req.body;
-        const user = await userService.login(username, password, role);
+        const { username, password } = req.body;
+        const user = await userService.login(username, password);
 
         const token = jwt.sign(
-            { user_id: user.user_id, role: user.role },
+            { user_id: user.user_id },
             JWT_SECRET,
             { expiresIn: "1d" }
         );
@@ -161,11 +161,10 @@ exports.loginUser = async (req, res) => {
                 user_id: user.user_id,
                 username: user.username,
                 nama: user.nama,
-                role: user.role,
             },
         });
     } catch (error) {
         console.error("Login error:", error);
-        return res.status(401).json({ message: "Username, password, atau role salah!" });
+        return res.status(401).json({ message: "Username atau password salah!" });
     }
 };
