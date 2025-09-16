@@ -11,7 +11,7 @@ router.get("/users", authMiddleware, userController.getAllUsers);
 router.get("/users/:id", authMiddleware, userController.getUserById);
 router.post(
   "/users",
-//   authMiddleware,
+  authMiddleware,
   upload.single("photo"),
   validateUserInput,
   userController.createUser

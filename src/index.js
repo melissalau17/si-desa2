@@ -19,10 +19,10 @@ const app = express();
 const server = http.createServer(app);
 
 const allowedOrigins = [
-  "https://admin-sidesa.vercel.app", 
-  "exp://",
-  "exp+sistem-desa-mob://",
-  "sistem-desa-mob://",
+    "https://admin-sidesa.vercel.app",
+    "exp://",
+    "exp+sistem-desa-mob://",
+    "sistem-desa-mob://",
 ];
 
 const localhostRegex = /^http:\/\/localhost(:\d+)?$/;
@@ -31,42 +31,43 @@ const zeroHostRegex = /^http:\/\/0\.0\.0\.0(:\d+)?$/;
 
 // CORS setup
 app.use(
-  cors({
-    origin: function (origin, callback) {
-      if (
-        !origin ||
-        allowedOrigins.some(o => origin.startsWith(o)) ||
-        localhostRegex.test(origin) ||
-        lanIpRegex.test(origin) ||
-        zeroHostRegex.test(origin)
-      ) {
-        callback(null, true);
-      } else {
-        callback(new Error("CORS policy does not allow access from this origin."), false);
-      }
-    },
-    credentials: true,
-  })
+    cors({
+        origin: function (origin, callback) {
+            if (
+                !origin ||
+                allowedOrigins.some(o => origin.startsWith(o)) ||
+                localhostRegex.test(origin) ||
+                lanIpRegex.test(origin) ||
+                zeroHostRegex.test(origin)
+            ) {
+                callback(null, true);
+            } else {
+                callback(new Error("CORS policy does not allow access from this origin."), false);
+            }
+        },
+        credentials: true,
+    })
 );
 
 // Socket.IO setup
+// Socket.IO setup
 const io = new Server(server, {
-  cors: {
-    origin: (origin, callback) => {
-      if (
-        !origin ||
-        allowedOrigins.includes(origin) ||
-        localhostRegex.test(origin) ||
-        lanIpRegex.test(origin)
-      ) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS for Socket.IO"));
-      }
+    cors: {
+        origin: (origin, callback) => {
+            if (
+                !origin ||
+                allowedOrigins.some(o => origin.startsWith(o)) ||
+                localhostRegex.test(origin) ||
+                lanIpRegex.test(origin)
+            ) {
+                callback(null, true);
+            } else {
+                callback(new Error("Not allowed by CORS for Socket.IO"));
+            }
+        },
+        methods: ["GET", "POST"],
+        credentials: true,
     },
-    methods: ["GET", "POST"],
-    credentials: true,
-  },
 });
 
 // Middleware
@@ -74,13 +75,13 @@ app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
 app.use((req, res, next) => {
-  req.io = io;
-  next();
+    req.io = io;
+    next();
 });
 
 // Test route
 app.get("/api", (req, res) => {
-  res.send("hello API");
+    res.send("hello API");
 });
 
 // API routes
@@ -92,26 +93,26 @@ app.use("/api", suratRoutes);
 
 // Socket.IO events
 io.on("connection", (socket) => {
-  console.log("🔌 New client connected:", socket.id);
+    console.log("🔌 New client connected:", socket.id);
 
-  socket.emit("notification", {
-    title: "Welcome",
-    body: "Real-time connection established.",
-  });
+    socket.emit("notification", {
+        title: "Welcome",
+        body: "Real-time connection established.",
+    });
 
-  socket.on("client_event", (data) => {
-    console.log("Received from client:", data);
-  });
+    socket.on("client_event", (data) => {
+        console.log("Received from client:", data);
+    });
 
-  socket.on("disconnect", () => {
-    console.log("Client disconnected:", socket.id);
-  });
+    socket.on("disconnect", () => {
+        console.log("Client disconnected:", socket.id);
+    });
 });
 
 // Start server
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, "0.0.0.0", () => {
-  console.log(`API + Socket.IO running at http://0.0.0.0:${PORT}`);
+    console.log(`API + Socket.IO running at http://0.0.0.0:${PORT}`);
 });
 
 module.exports = { app, server, io };

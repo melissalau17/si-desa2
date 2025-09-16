@@ -146,7 +146,7 @@ exports.deleteUser = async (req, res) => {
 exports.loginUser = async (req, res) => {
     try {
         const { username, password } = req.body;
-        const user = await userService.login(username, password);
+        const user = await userService.loginUser(username, password);
 
         const token = jwt.sign(
             { user_id: user.user_id },

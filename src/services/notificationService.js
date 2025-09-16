@@ -1,5 +1,6 @@
 const admin = require('firebase-admin');
-const db = require('../../prisma/db');
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 const { io } = require('../index');
 
 const sendPushNotification = async (tokens, payload) => {
@@ -53,7 +54,6 @@ exports.sendBeritaNotification = async (berita) => {
 };
 
 exports.sendUserRegistrationNotification = async (user) => {
-    // Notify web clients
     io.emit("notification", {
         title: "Pengguna Baru Terdaftar!",
         message: `Pengguna ${user.nama} berhasil didaftarkan.`,
