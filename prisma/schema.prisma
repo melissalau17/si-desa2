@@ -19,7 +19,7 @@ model User {
   username  String
   password  String
   photo_url String? @db.VarChar(255)
-  role      String  
+  role      String  @default("user")
   email     String? @db.VarChar(255)
 
   // back relation

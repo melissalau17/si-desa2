@@ -1,5 +1,5 @@
 const userModel = require("../models/userModel");
-const { hashPassword, verifyPassword } = require("../utils/hashUtils");
+const { hashPassword, verifyPassword } = require("../utils/hash");
 const { createError } = require("../utils/errorHandler");
 const r2Client = require('../r2Config');
 const { DeleteObjectCommand } = require('@aws-sdk/client-s3');
