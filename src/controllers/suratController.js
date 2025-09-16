@@ -42,20 +42,20 @@ exports.getSuratById = async (req, res) => {
 exports.createSurat = async (req, res) => {
     try {
         const { nik, nama, tempat_lahir, tanggal_lahir, jenis_kelamin, agama, alamat, no_hp, email, jenis_surat, tujuan_surat, waktu_kematian } = req.body;
-        
-        const photo_ktp = req.files?.photo_ktp?.[0];
-        const photo_kk = req.files?.photo_kk?.[0];
-        const foto_usaha = req.files?.foto_usaha?.[0];
-        const gaji_ortu = req.files?.gaji_ortu?.[0];
 
-        if (!photo_ktp || !photo_kk) {
+        const photo_ktp_file = req.files?.photo_ktp?.[0];
+        const photo_kk_file = req.files?.photo_kk?.[0];
+        const foto_usaha_file = req.files?.foto_usaha?.[0];
+        const gaji_ortu_file = req.files?.gaji_ortu?.[0];
+
+        if (!photo_ktp_file || !photo_kk_file) {
             return res.status(400).json({ message: "KTP dan KK wajib diunggah!" });
         }
-        
-        const photo_ktp_url = await R2Service.uploadFile(photo_ktp.buffer, photo_ktp.mimetype);
-        const photo_kk_url = await R2Service.uploadFile(photo_kk.buffer, photo_kk.mimetype);
-        const foto_usaha_url = foto_usaha ? await R2Service.uploadFile(foto_usaha.buffer, foto_usaha.mimetype) : null;
-        const gaji_ortu_url = gaji_ortu ? await R2Service.uploadFile(gaji_ortu.buffer, gaji_ortu.mimetype) : null;
+
+        const photo_ktp_url = await R2Service.uploadFile(photo_ktp_file.buffer, photo_ktp_file.mimetype);
+        const photo_kk_url = await R2Service.uploadFile(photo_kk_file.buffer, photo_kk_file.mimetype);
+        const foto_usaha_url = foto_usaha_file ? await R2Service.uploadFile(foto_usaha_file.buffer, foto_usaha_file.mimetype) : null;
+        const gaji_ortu_url = gaji_ortu_file ? await R2Service.uploadFile(gaji_ortu_file.buffer, gaji_ortu_file.mimetype) : null;
 
         let parsedTanggalLahir = null;
         if (tanggal_lahir) {
