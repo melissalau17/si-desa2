@@ -35,7 +35,7 @@ router.post('/laporan', upload.single('photo'), async (req, res) => {
 
             await r2Client.send(new PutObjectCommand(params));
             
-            photoUrl = `https://4cdb39fc96619271522ab6d0b5cb7df6.r2.cloudflarestorage.com/sistemdesa/${fileName}`;
+            photoUrl = `https://sistemdesa.4cdb39fc96619271522ab6d0b5cb7df6.r2.cloudflarestorage.com/sistemdesa/${fileName}`;
         }
 
         const laporanData = { ...req.body, photo: photoUrl };

@@ -46,7 +46,7 @@ const uploadFields = upload.fields([
 
 const uploadToR2 = async (file) => {
     if (!file) return null;
-    const fileName = `${file.fieldname}/${Date.now()}-${file.originalname}`;
+    fileName = `${file.fieldname}/${Date.now()}-${file.originalname}`;
     const params = {
         Bucket: 'sistemdesa',
         Key: fileName,
@@ -54,7 +54,7 @@ const uploadToR2 = async (file) => {
         ContentType: file.mimetype,
     };
     await r2Client.send(new PutObjectCommand(params));
-    return `https://4cdb39fc96619271522ab6d0b5cb7df6.r2.cloudflarestorage.com/sistemdesa/${fileName}`;
+    return `https://sistemdesa.4cdb39fc96619271522ab6d0b5cb7df6.r2.cloudflarestorage.com/sistemdesa/${fileName}`;
 };
 
 const deleteFromR2 = async (key) => {
