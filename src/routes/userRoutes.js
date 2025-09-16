@@ -7,15 +7,19 @@ const validateUserInput = require("../middlewares/validateUserInput");
 const authMiddleware = require("../middlewares/authMiddleware");
 
 const upload = multer({ storage: multer.memoryStorage() });
-router.get("/users", authMiddleware, userController.getAllUsers);
-router.get("/users/:id", authMiddleware, userController.getUserById);
+
+// Public Routes (No Token Required)
 router.post(
   "/users",
-  authMiddleware,
   upload.single("photo"),
   validateUserInput,
   userController.createUser
 );
+router.post("/login", userController.loginUser);
+
+// Protected Routes (Token Required)
+router.get("/users", authMiddleware, userController.getAllUsers);
+router.get("/users/:id", authMiddleware, userController.getUserById);
 router.patch(
   "/users/:id",
   authMiddleware,
@@ -23,7 +27,5 @@ router.patch(
   userController.updateUser
 );
 router.delete("/users/:id", authMiddleware, userController.deleteUser);
-
-router.post("/login", userController.loginUser);
 
 module.exports = router;
