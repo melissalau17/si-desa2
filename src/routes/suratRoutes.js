@@ -15,7 +15,6 @@ router.get("/letters/:id", authMiddleware, suratController.getSuratById);
 
 router.post(
   "/letters",
-  authMiddleware,
   upload.fields([
     { name: "photo_ktp", maxCount: 1 },
     { name: "photo_kk", maxCount: 1 },
