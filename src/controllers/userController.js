@@ -1,7 +1,6 @@
 const userService = require("../services/userService");
 const { handleError } = require("../utils/errorHandler");
 const jwt = require("jsonwebtoken");
-const userModel = require("../models/userModel");
 const R2Service = require("../services/r2Service"); // Assuming R2 service
 const NotificationService = require("../services/notificationService"); // Your Notification service
 const { hashPassword } = require("../utils/hash");
