@@ -1,7 +1,7 @@
 const userService = require("../services/userService");
 const { handleError } = require("../utils/errorHandler");
 const jwt = require("jsonwebtoken");
-const R2Service = require("../services/r2Service"); // Assuming R2 service
+const R2Service = require("../services/r2Service"); 
 const NotificationService = require("../services/notificationService"); // Your Notification service
 const { hashPassword } = require("../utils/hash");
 
@@ -163,7 +163,6 @@ exports.loginUser = async (req, res) => {
             },
         });
     } catch (error) {
-        console.error("Login error:", error);
-        return res.status(401).json({ message: "Username atau password salah!" });
+        handleError(res, error); 
     }
 };
