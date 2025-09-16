@@ -1,13 +1,8 @@
 const suratModel = require("../models/SuratModel");
-const { Buffer } = require("buffer");
 
 exports.getAllSurat = () => suratModel.findAll();
 exports.getSuratById = (id) => suratModel.findById(id);
 exports.findByNIK = (nik) => suratModel.findByNIK(nik);
-const convertBase64ToBinary = (base64String) => {
-    const buffer = Buffer.from(base64String, "base64"); // Convert Base64 ke Binary
-    return buffer;
-}
 
 exports.createSurat = (data) => {
     const {
@@ -22,11 +17,11 @@ exports.createSurat = (data) => {
         email,
         jenis_surat,
         tujuan_surat,
-        photo_ktp,
-        photo_kk,
-        foto_usaha,
+        photo_ktp_url,
+        photo_kk_url,
+        foto_usaha_url,
         waktu_kematian,
-        gaji_ortu,
+        gaji_ortu_url,
     } = data;
 
     return suratModel.create({
@@ -41,11 +36,11 @@ exports.createSurat = (data) => {
         tujuan_surat,
         no_hp,
         email,
-        photo_ktp: photo_ktp ? convertBase64ToBinary(photo_ktp) : null,
-        photo_kk: photo_kk ? convertBase64ToBinary(photo_kk) : null,
-        foto_usaha: foto_usaha ? convertBase64ToBinary(foto_usaha) : null,
+        photo_ktp: photo_ktp_url,
+        photo_kk: photo_kk_url,
+        foto_usaha: foto_usaha_url,
         waktu_kematian,
-        gaji_ortu: gaji_ortu ? convertBase64ToBinary(gaji_ortu) : null,
+        gaji_ortu: gaji_ortu_url,
     });
 };
 
