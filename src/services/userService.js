@@ -104,6 +104,12 @@ exports.deleteUser = async (id) => {
     return userModel.remove(id);
 };
 
+const createError = (message, status) => {
+    const error = new Error(message);
+    error.status = status;
+    return error;
+};
+
 exports.loginUser = async (identifier, password) => {
     const user = await userModel.findByUsernameOrEmail(identifier);
     if (!user) {
