@@ -42,14 +42,11 @@ exports.getLaporanById = async (req, res) => {
 
 exports.createLaporan = async (req, res) => {
     try {
-        const { nama, keluhan, deskripsi, lokasi, vote, user_id } = req.body;
+        const { nama, keluhan, deskripsi, lokasi } = req.body;
         const photo = req.file;
 
         if (!nama || !lokasi || !keluhan || !deskripsi) {
             return res.status(400).json({ message: "Semua field harus diisi!" });
-        }
-        if (!user_id) {
-            return res.status(400).json({ message: "User ID harus diisi!" });
         }
         if (!photo) {
             return res.status(400).json({ message: "Foto harus diunggah!" });

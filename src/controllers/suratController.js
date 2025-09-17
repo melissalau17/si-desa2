@@ -41,12 +41,12 @@ exports.getSuratById = async (req, res) => {
 
 exports.createSurat = async (req, res) => {
     try {
-        const { nik, nama, tempat_lahir, tanggal_lahir, jenis_kelamin, agama, alamat, no_hp, email, jenis_surat, tujuan_surat, waktu_kematian } = req.body;
+        const { nik, nama, tempat_lahir, jenis_kelamin, agama, alamat, no_hp, email, jenis_surat, tujuan_surat, waktu_kematian } = req.body;
 
         const photo_ktp = req.files?.photo_ktp?.[0];
         const photo_kk = req.files?.photo_kk?.[0];
-        const foto_usaha = req.files?.foto_usaha?.[0];
-        const gaji_ortu = req.files?.gaji_ortu?.[0];
+        // const foto_usaha = req.files?.foto_usaha?.[0];
+        // const gaji_ortu = req.files?.gaji_ortu?.[0];
 
         if (!photo_ktp || !photo_kk) {
             return res.status(400).json({ message: "KTP dan KK wajib diunggah!" });
@@ -54,21 +54,21 @@ exports.createSurat = async (req, res) => {
 
         const photo_ktp_url = await R2Service.uploadFile(photo_ktp.buffer, photo_ktp.mimetype);
         const photo_kk_url = await R2Service.uploadFile(photo_kk.buffer, photo_kk.mimetype);
-        const foto_usaha_url = foto_usaha ? await R2Service.uploadFile(foto_usaha.buffer, foto_usaha.mimetype) : null;
-        const gaji_ortu_url = gaji_ortu ? await R2Service.uploadFile(gaji_ortu.buffer, gaji_ortu.mimetype) : null;
+        // const foto_usaha_url = foto_usaha ? await R2Service.uploadFile(foto_usaha.buffer, foto_usaha.mimetype) : null;
+        // const gaji_ortu_url = gaji_ortu ? await R2Service.uploadFile(gaji_ortu.buffer, gaji_ortu.mimetype) : null;
 
-        let parsedTanggalLahir = null;
-        if (tanggal_lahir) {
-            const m = moment.tz(tanggal_lahir, "DD-MM-YYYY", "Asia/Jakarta");
-            if (!m.isValid()) {
-                return res.status(400).json({ message: "Format tanggal_lahir tidak valid!" });
-            }
-            parsedTanggalLahir = m.add(1, "day").toDate();
-        }
+        // let parsedTanggalLahir = null;
+        // if (tanggal_lahir) {
+        //     const m = moment.tz(tanggal_lahir, "DD-MM-YYYY", "Asia/Jakarta");
+        //     if (!m.isValid()) {
+        //         return res.status(400).json({ message: "Format tanggal_lahir tidak valid!" });
+        //     }
+        //     parsedTanggalLahir = m.add(1, "day").toDate();
+        // }
 
         const newSurat = await suratService.createSurat({
-            nik, nama, tempat_lahir, tanggal_lahir: parsedTanggalLahir, jenis_kelamin, agama, alamat, no_hp, email, jenis_surat, tujuan_surat, waktu_kematian,
-            photo_ktp_url, photo_kk_url, foto_usaha_url, gaji_ortu_url,
+            nik, nama, tempat_lahir, jenis_kelamin, agama, alamat, no_hp, email, jenis_surat, tujuan_surat, waktu_kematian,
+            photo_ktp_url, photo_kk_url,
             tanggal: moment().tz("Asia/Jakarta").toDate(),
         });
         
@@ -85,30 +85,30 @@ exports.createSurat = async (req, res) => {
 
 exports.updateSurat = async (req, res) => {
     try {
-        const { nik, nama, tempat_lahir, tanggal_lahir, jenis_kelamin, agama, alamat, no_hp, email, jenis_surat, tujuan_surat, waktu_kematian, status } = req.body;
+        const { nik, nama, tempat_lahir, jenis_kelamin, agama, alamat, no_hp, email, jenis_surat, tujuan_surat, waktu_kematian, status } = req.body;
         
         const oldSurat = await suratService.getSuratById(req.params.id);
         if (!oldSurat) return res.status(404).json({ message: "Surat tidak ditemukan!" });
 
         const photo_ktp = req.files?.photo_ktp?.[0];
         const photo_kk = req.files?.photo_kk?.[0];
-        const foto_usaha = req.files?.foto_usaha?.[0];
-        const gaji_ortu = req.files?.gaji_ortu?.[0];
+        // const foto_usaha = req.files?.foto_usaha?.[0];
+        // const gaji_ortu = req.files?.gaji_ortu?.[0];
 
         let photo_ktp_url = photo_ktp ? await R2Service.uploadFile(photo_ktp.buffer, photo_ktp.mimetype) : oldSurat.photo_ktp_url;
         let photo_kk_url = photo_kk ? await R2Service.uploadFile(photo_kk.buffer, photo_kk.mimetype) : oldSurat.photo_kk_url;
-        let foto_usaha_url = foto_usaha ? await R2Service.uploadFile(foto_usaha.buffer, foto_usaha.mimetype) : oldSurat.foto_usaha_url;
-        let gaji_ortu_url = gaji_ortu ? await R2Service.uploadFile(gaji_ortu.buffer, gaji_ortu.mimetype) : oldSurat.gaji_ortu_url;
+        // let foto_usaha_url = foto_usaha ? await R2Service.uploadFile(foto_usaha.buffer, foto_usaha.mimetype) : oldSurat.foto_usaha_url;
+        // let gaji_ortu_url = gaji_ortu ? await R2Service.uploadFile(gaji_ortu.buffer, gaji_ortu.mimetype) : oldSurat.gaji_ortu_url;
 
-        let parsedTanggalLahir = null;
-        if (tanggal_lahir && typeof tanggal_lahir === "string" && tanggal_lahir.trim() !== "") {
-            parsedTanggalLahir = moment.tz(tanggal_lahir, "DD/MM/YYYY", "Asia/Jakarta").add(1, "day").toDate();
-            if (isNaN(parsedTanggalLahir.getTime())) return res.status(400).json({ message: "Format tanggal_lahir tidak valid!" });
-        }
+        // let parsedTanggalLahir = null;
+        // if (tanggal_lahir && typeof tanggal_lahir === "string" && tanggal_lahir.trim() !== "") {
+        //     parsedTanggalLahir = moment.tz(tanggal_lahir, "DD/MM/YYYY", "Asia/Jakarta").add(1, "day").toDate();
+        //     if (isNaN(parsedTanggalLahir.getTime())) return res.status(400).json({ message: "Format tanggal_lahir tidak valid!" });
+        // }
 
         const updatePayload = {
-            nik, nama, tempat_lahir, tanggal_lahir: parsedTanggalLahir, jenis_kelamin, agama, alamat, no_hp, email, jenis_surat, tujuan_surat, waktu_kematian, status,
-            photo_ktp_url, photo_kk_url, foto_usaha_url, gaji_ortu_url,
+            nik, nama, tempat_lahir, jenis_kelamin, agama, alamat, no_hp, email, jenis_surat, tujuan_surat, waktu_kematian, status,
+            photo_ktp_url, photo_kk_url,
         };
 
         const updatedSurat = await suratService.updateSurat(req.params.id, updatePayload);
