@@ -3,6 +3,8 @@ const { hashPassword, verifyPassword } = require("../utils/hash");
 const { createError } = require("../utils/errorHandler");
 const r2Client = require('../r2Config');
 const { DeleteObjectCommand } = require('@aws-sdk/client-s3');
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 
 exports.getAllUsers = () => userModel.findAll();
 
@@ -34,7 +36,7 @@ exports.createUser = async (data) => {
         username,
         email,
         password: hashedPassword,
-        photo: photoUrl,
+        photo_url: photoUrl,
         NIK,
         agama,
         alamat,
@@ -58,32 +60,31 @@ exports.updateUser = async (id, data, photoUrl) => {
         jenis_kel: data.jenis_kel,
         no_hp: data.no_hp,
         role: data.role,
+        photo_url: existingUser.photo_url, 
     };
 
     if (data.password) {
         updateData.password = await hashPassword(data.password);
     }
-
+    
     if (photoUrl) {
-        if (existingUser.photo) {
-            const oldPhotoKey = existingUser.photo.split('/').slice(4).join('/');
+        if (existingUser.photo_url) {
+            const oldPhotoKey = existingUser.photo_url.split('/').slice(4).join('/');
             await r2Client.send(new DeleteObjectCommand({
                 Bucket: 'sistemdesa',
                 Key: oldPhotoKey
             }));
         }
-        updateData.photo = photoUrl;
-    } else if (data.photo === null) {
-        if (existingUser.photo) {
-            const oldPhotoKey = existingUser.photo.split('/').slice(4).join('/');
-            await r2Client.send(new DeleteObjectCommand({
-                Bucket: 'sistemdesa',
-                Key: oldPhotoKey
-            }));
-        }
-        updateData.photo = null;
-    } else {
-        updateData.photo = existingUser.photo;
+        updateData.photo_url = photoUrl;
+    } 
+    
+    if (data.photo_url === null && existingUser.photo_url) {
+        const oldPhotoKey = existingUser.photo_url.split('/').slice(4).join('/');
+        await r2Client.send(new DeleteObjectCommand({
+            Bucket: 'sistemdesa',
+            Key: oldPhotoKey
+        }));
+        updateData.photo_url = null;
     }
 
     return userModel.update(id, updateData);
@@ -93,7 +94,7 @@ exports.deleteUser = async (id) => {
     const user = await userModel.findById(id);
     if (!user) return null;
 
-    if (user.photo) {
+    if (user.photo_url) {
         const photoKey = user.photo.split('/').slice(4).join('/');
         await r2Client.send(new DeleteObjectCommand({
             Bucket: 'sistemdesa',

@@ -35,7 +35,7 @@ exports.createLaporan = async (data) => {
             lokasi,
             vote: vote || 0,
             status,
-            photo: photoUrl,
+            photo_url: photoUrl,
             user_id,
         }
     });
@@ -57,11 +57,11 @@ exports.updateLaporan = async (id, data) => {
 exports.deleteLaporan = async (id) => {
     const laporan = await prisma.laporan.findUnique({
         where: { laporan_id: parseInt(id) },
-        select: { photo: true }
+        select: { photo_url: true }
     });
 
-    if (laporan && laporan.photo) {
-        const photoUrl = laporan.photo;
+    if (laporan && laporan.photo_url) {
+        const photoUrl = laporan.photo_url;
         const urlParts = photoUrl.split('/');
         const key = urlParts.slice(4).join('/');
 

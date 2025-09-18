@@ -15,7 +15,7 @@ exports.createBerita = async (data) => {
     tanggal,
     kontent,
     status,
-    photo: photoUrl, 
+    photo_url: photoUrl, 
   });
 };
 
@@ -32,25 +32,25 @@ exports.updateBerita = async (berita_id, data, photoUrl) => {
   };
 
   if (photoUrl) {
-    if (existingBerita.photo) {
-      const oldPhotoKey = existingBerita.photo.split('/').slice(4).join('/');
+    if (existingBerita.photo_url) {
+      const oldPhotoKey = existingBerita.photo_url.split('/').slice(4).join('/');
       await r2Client.send(new DeleteObjectCommand({
         Bucket: 'sistemdesa',
         Key: oldPhotoKey
       }));
     }
-    updateData.photo = photoUrl;
-  } else if (data.photo === null) {
-    if (existingBerita.photo) {
-      const oldPhotoKey = existingBerita.photo.split('/').slice(4).join('/');
+    updateData.photo_url = photoUrl;
+  } else if (data.photo_url === null) {
+    if (existingBerita.photo_url) {
+      const oldPhotoKey = existingBerita.photo_url.split('/').slice(4).join('/');
       await r2Client.send(new DeleteObjectCommand({
         Bucket: 'sistemdesa',
         Key: oldPhotoKey
       }));
     }
-    updateData.photo = null;
+    updateData.photo_url = null;
   } else {
-    updateData.photo = existingBerita.photo;
+    updateData.photo_url = existingBerita.photo_url;
   }
 
   return beritaModel.update(berita_id, updateData);
@@ -60,8 +60,8 @@ exports.deleteBerita = async (berita_id) => {
   const berita = await beritaModel.findById(berita_id);
   if (!berita) return null;
 
-  if (berita.photo) {
-    const photoKey = berita.photo.split('/').slice(4).join('/');
+  if (berita.photo_url) {
+    const photoKey = berita.photo_url.split('/').slice(4).join('/');
     await r2Client.send(new DeleteObjectCommand({
       Bucket: 'sistemdesa',
       Key: photoKey
