@@ -96,20 +96,27 @@ exports.updateUser = async (req, res) => {
     try {
         const { nama, email, username, password, NIK, agama, alamat, jenis_kel, no_hp, role } = req.body;
         const photo = req.file;
+        const userId = req.params.id;
 
+        const existingUser = await userService.getUserById(userId);
+        if (!existingUser) {
+            return res.status(404).json({ message: "User tidak ditemukan!" });
+        }
+        
         if (NIK && !NIK.startsWith("120724")) {
             return res.status(403).json({ message: "Anda bukan warga desa ini!" });
         }
 
         if (NIK) {
-            const existingUser = await userService.findByNIK(NIK);
-            if (existingUser && existingUser.user_id != req.params.id) {
+            const userWithSameNIK = await userService.findByNIK(NIK);
+            if (userWithSameNIK && userWithSameNIK.user_id != userId) {
                 return res.status(409).json({ message: "NIK sudah digunakan oleh user lain!" });
             }
         }
-
+        
         let hashedPassword = password ? await hashPassword(password) : undefined;
-        let photoUrl = null;
+        let photoUrl = existingUser.photo_url; // Use existing photo_url by default
+
         if (photo) {
             photoUrl = await R2Service.uploadFile(photo.buffer, photo.mimetype);
         }
@@ -117,10 +124,10 @@ exports.updateUser = async (req, res) => {
         const updatePayload = {
             nama, username, email, NIK, agama, alamat, jenis_kel, no_hp, role,
             ...(hashedPassword && { password: hashedPassword }),
-            ...(photoUrl && { photo_url: photoUrl }),
+            photo_url: photoUrl,
         };
 
-        const updatedUser = await userService.updateUser(req.params.id, updatePayload);
+        const updatedUser = await userService.updateUser(userId, updatePayload);
 
         if (!updatedUser) {
             return res.status(404).json({ message: "User tidak ditemukan!" });

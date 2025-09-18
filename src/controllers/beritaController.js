@@ -82,11 +82,9 @@ exports.createBerita = async (req, res) => {
             tanggal,
             kontent,
             status,
-            photo_url: photoUrl, // Use the URL instead of the buffer
+            photo_url: photoUrl,
         });
 
-        // Trigger notifications for both web and mobile
-        // Call the reusable function we defined above
         await sendBeritaNotification(newBerita);
 
         res.status(201).json({
@@ -107,9 +105,8 @@ exports.updateBerita = async (req, res) => {
         }
 
         const tanggal = moment().tz("Asia/Jakarta").toISOString();
-        let photoUrl = oldBerita.photo_url; // Keep old URL by default
+        let photoUrl = oldBerita.photo_url; 
 
-        // If a new file is uploaded, upload it to R2 and get the new URL
         if (req.file) {
             const newPhoto = req.file;
             photoUrl = await R2Service.uploadFile(newPhoto.buffer, newPhoto.mimetype);
