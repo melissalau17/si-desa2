@@ -8,7 +8,7 @@ exports.findById = (id) =>
 exports.create = ({
   nama,
   keluhan,
-  photo,
+  photo_url,
   tanggal,
   deskripsi,
   lokasi,
@@ -19,7 +19,7 @@ exports.create = ({
     data: {
       nama,
       keluhan,
-      photo,
+      photo_url,
       tanggal,
       deskripsi,
       lokasi,

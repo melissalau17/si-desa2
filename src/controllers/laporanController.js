@@ -43,19 +43,19 @@ exports.getLaporanById = async (req, res) => {
 exports.createLaporan = async (req, res) => {
     try {
         const { nama, keluhan, deskripsi, lokasi } = req.body;
-        const photo = req.file;
+        const photo_url = req.file;
 
         if (!nama || !lokasi || !keluhan || !deskripsi) {
             return res.status(400).json({ message: "Semua field harus diisi!" });
         }
-        if (!photo) {
+        if (!photo_url) {
             return res.status(400).json({ message: "Foto harus diunggah!" });
         }
 
         const status = "Belum Dikerjakan";
         const tanggal = moment().tz("Asia/Jakarta").format("YYYY-MM-DDTHH:mm:ss");
 
-        const photoUrl = await R2Service.uploadFile(photo.buffer, photo.mimetype);
+        const photoUrl = await R2Service.uploadFile(photo_url.buffer, photo_url.mimetype);
 
         const data = {
             nama,
@@ -66,7 +66,7 @@ exports.createLaporan = async (req, res) => {
             vote: vote || 0,
             status,
             user_id: parseInt(user_id, 10),
-            photo: photoUrl,
+            photo_url: photoUrl,
         };
 
         const newLaporan = await laporanService.createLaporan(data);
@@ -92,7 +92,7 @@ exports.updateLaporan = async (req, res) => {
         }
 
         const tanggal = moment().tz("Asia/Jakarta").format("YYYY-MM-DDTHH:mm:ss");
-        let photoUrl = oldLaporan.photo; 
+        let photoUrl = oldLaporan.photo_url; 
 
         if (req.file) {
             const newPhoto = req.file;
@@ -107,7 +107,7 @@ exports.updateLaporan = async (req, res) => {
             keluhan,
             vote: parseInt(vote, 10) || oldLaporan.vote,
             status,
-            photo: photoUrl,
+            photo_url: photoUrl,
         };
 
         const updatedLaporan = await laporanService.updateLaporan(req.params.id, updatePayload);

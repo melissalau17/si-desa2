@@ -15,7 +15,7 @@ const laporanSchema = Joi.object({
   tanggal: Joi.string().optional(),
   vote: Joi.number().integer().optional().default(0),
   status: Joi.string().optional(),
-  photo: Joi.string().uri().optional().allow(null, ""),
+  photo_url: Joi.string().uri().optional().allow(null, ""),
 });
 
 router.post('/laporan', upload.single('photo'), async (req, res) => {
@@ -38,7 +38,7 @@ router.post('/laporan', upload.single('photo'), async (req, res) => {
             photoUrl = `https://sistemdesa.4cdb39fc96619271522ab6d0b5cb7df6.r2.cloudflarestorage.com/sistemdesa/${fileName}`;
         }
 
-        const laporanData = { ...req.body, photo: photoUrl };
+        const laporanData = { ...req.body, photo_url: photoUrl };
 
         const { error } = laporanSchema.validate(laporanData);
 

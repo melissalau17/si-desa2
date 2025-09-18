@@ -18,7 +18,7 @@ const userSchema = Joi.object({
     no_hp: Joi.string().required(),
     jenis_kel: Joi.string().required(),
     role: Joi.string().required(),
-    photo: Joi.string().uri().optional().allow(null, ""),
+    photo_url: Joi.string().uri().optional().allow(null, ""),
 });
 
 router.post('/user', upload.single('photo'), async (req, res) => {
@@ -41,7 +41,7 @@ router.post('/user', upload.single('photo'), async (req, res) => {
             photoUrl = `https://sistemdesa.4cdb39fc96619271522ab6d0b5cb7df6.r2.cloudflarestorage.com/${fileName}`;
         }
 
-        const userData = { ...req.body, photo: photoUrl };
+        const userData = { ...req.body, photo_url: photoUrl };
         const { error } = userSchema.validate(userData);
 
         if (error) {

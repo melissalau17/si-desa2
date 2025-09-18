@@ -67,14 +67,14 @@ exports.createBerita = async (req, res) => {
         }
 
         const tanggal = moment().tz("Asia/Jakarta").toISOString();
-        const photo = req.file;
+        const photo_url = req.file;
 
-        if (!photo) {
+        if (!photo_url) {
             return res.status(400).json({ message: "Photo harus diisi!" });
         }
 
         // Upload the image to Cloudflare R2 and get the public URL
-        const photoUrl = await R2Service.uploadFile(photo.buffer, photo.mimetype);
+        const photoUrl = await R2Service.uploadFile(photo_url.buffer, photo_url.mimetype);
 
         const newBerita = await beritaService.createBerita({
             judul,

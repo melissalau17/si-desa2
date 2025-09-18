@@ -5,12 +5,12 @@ exports.findAll = () => prisma.Berita.findMany();
 exports.findById = (id) =>
   prisma.Berita.findUnique({ where: { berita_id: Number(id) } });
 
-exports.create = ({ judul, kategori, photo, tanggal, kontent, status }) =>
+exports.create = ({ judul, kategori, photo_url, tanggal, kontent, status }) =>
   prisma.Berita.create({
     data: {
       judul,
       kategori,
-      photo,
+      photo_url,
       tanggal,
       kontent,
       status,

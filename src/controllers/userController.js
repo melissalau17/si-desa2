@@ -47,7 +47,7 @@ exports.getUserById = async (req, res) => {
 exports.createUser = async (req, res) => {
     try {
         const { nama, username, email, password, NIK, agama, alamat, jenis_kel, no_hp, role } = req.body;
-        const photo = req.file;
+        const photo_url = req.file;
         const socket = req.app.get('socketio');
 
         if (!nama || !username || !password || !NIK || !agama || !alamat || !jenis_kel || !no_hp || !role) {
@@ -79,7 +79,6 @@ exports.createUser = async (req, res) => {
             photo_url: photoUrl,
         });
 
-        // Use the notification service to send a notification
         await NotificationService.sendUserRegistrationNotification(newUser, socket);
 
         return res.status(201).json({
@@ -95,9 +94,10 @@ exports.createUser = async (req, res) => {
 exports.updateUser = async (req, res) => {
     try {
         const { nama, email, username, password, NIK, agama, alamat, jenis_kel, no_hp, role } = req.body;
-        const photo = req.file;
+        const photo_url = req.file;
         const userId = req.params.id;
 
+        // Fetch the existing user to get their current photo_url
         const existingUser = await userService.getUserById(userId);
         if (!existingUser) {
             return res.status(404).json({ message: "User tidak ditemukan!" });
@@ -115,16 +115,18 @@ exports.updateUser = async (req, res) => {
         }
         
         let hashedPassword = password ? await hashPassword(password) : undefined;
-        let photoUrl = existingUser.photo_url; // Use existing photo_url by default
+        let photoUrl = existingUser.photo_url;
 
-        if (photo) {
-            photoUrl = await R2Service.uploadFile(photo.buffer, photo.mimetype);
+        if (photo_url) {
+            // A new photo was uploaded, so upload it and get the new URL
+            photoUrl = await R2Service.uploadFile(photo_url.buffer, photo_url.mimetype);
         }
 
+        // Construct the update payload to be sent to the database
         const updatePayload = {
             nama, username, email, NIK, agama, alamat, jenis_kel, no_hp, role,
             ...(hashedPassword && { password: hashedPassword }),
-            photo_url: photoUrl,
+            photo_url: photoUrl, // Explicitly set the photo URL
         };
 
         const updatedUser = await userService.updateUser(userId, updatePayload);
