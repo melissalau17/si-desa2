@@ -1,7 +1,9 @@
+// In your suratController.js
+
 const suratService = require("../services/suratService");
 const { handleError } = require("../utils/errorHandler");
 const R2Service = require("../services/r2Service");
-const { sendSuratNotification, sendSuratStatusNotification } = require("../services/notificationService"); 
+const { sendSuratNotification, sendSuratStatusNotification } = require("../services/notificationService");
 const moment = require("moment-timezone");
 const PdfService = require("../services/pdfService");
 
@@ -73,26 +75,34 @@ exports.createSurat = async (req, res) => {
 
 exports.updateSurat = async (req, res) => {
     try {
-        const { nik, nama, tempat_lahir, jenis_kelamin, agama, alamat, no_hp, email, jenis_surat, tujuan_surat, waktu_kematian, status } = req.body;
+        const { status } = req.body;
+        const suratId = req.params.id;
         
-        const oldSurat = await suratService.getSuratById(req.params.id);
+        // Fetch the old surat data to compare the status later
+        const oldSurat = await suratService.getSuratById(suratId);
         if (!oldSurat) return res.status(404).json({ message: "Surat tidak ditemukan!" });
 
-        const photo_ktp = req.files?.photo_ktp?.[0];
-        const photo_kk = req.files?.photo_kk?.[0];
+        // Normalize the status value to lowercase to avoid case-sensitivity issues
+        const newStatus = status ? status.toLowerCase() : undefined;
 
-        let photo_ktp_url = photo_ktp ? await R2Service.uploadFile(photo_ktp.buffer, photo_ktp.mimetype) : oldSurat.photo_ktp_url;
-        let photo_kk_url = photo_kk ? await R2Service.uploadFile(photo_kk.buffer, photo_kk.mimetype) : oldSurat.photo_kk_url;
+        // Check if the status is actually changing to avoid unnecessary updates
+        if (newStatus && oldSurat.status === newStatus) {
+            return res.status(200).json({
+                message: "Status surat tidak berubah!",
+                data: oldSurat,
+            });
+        }
 
         const updatePayload = {
-            nik, nama, tempat_lahir, jenis_kelamin, agama, alamat, no_hp, email, jenis_surat, tujuan_surat, waktu_kematian, status,
-            photo_ktp_url, photo_kk_url,
+            // Only update the status field
+            status: newStatus,
         };
 
-        const updatedSurat = await suratService.updateSurat(req.params.id, updatePayload);
+        const updatedSurat = await suratService.updateSurat(suratId, updatePayload);
         if (!updatedSurat) return res.status(404).json({ message: "Surat tidak ditemukan!" });
         
-        if (status && oldSurat.status !== updatedSurat.status) {
+        // If the status has actually changed, send a notification
+        if (newStatus && oldSurat.status !== updatedSurat.status) {
             await sendSuratStatusNotification(updatedSurat);
         }
 
@@ -118,6 +128,12 @@ exports.deleteSurat = async (req, res) => {
 exports.printSurat = async (req, res) => {
     try {
         const suratId = req.params.id;
+        
+        if (!PdfService) {
+            console.error("PdfService module is not available.");
+            return res.status(500).send("Gagal mencetak surat: PdfService tidak ditemukan.");
+        }
+
         const pdfBuffer = await PdfService.generateSuratPdf(suratId);
         
         res.set({
@@ -126,7 +142,7 @@ exports.printSurat = async (req, res) => {
         });
         res.send(pdfBuffer);
     } catch (err) {
-        console.error(err);
-        res.status(500).send("Gagal mencetak surat");
+        console.error("Error in printSurat controller:", err);
+        res.status(500).send(`Gagal mencetak surat: ${err.message || "Kesalahan internal server."}`);
     }
 };
