@@ -63,7 +63,7 @@ CREATE TABLE `Surat` (
     `nama` VARCHAR(191) NOT NULL,
     `nik` VARCHAR(191) NOT NULL,
     `tempat_lahir` VARCHAR(191) NOT NULL,
-    `tanggal_lahir` DATETIME(3) NOT NULL,
+    `tanggal_lahir` DATETIME(3) NULL,
     `jenis_kelamin` VARCHAR(191) NOT NULL,
     `agama` VARCHAR(191) NOT NULL,
     `alamat` VARCHAR(191) NOT NULL,
