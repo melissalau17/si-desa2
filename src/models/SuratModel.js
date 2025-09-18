@@ -11,7 +11,7 @@ exports.create = ({
   nik,
   nama,
   tempat_lahir,
-  tanggal_lahir,
+//   tanggal_lahir,
   jenis_kelamin,
   agama,
   alamat,

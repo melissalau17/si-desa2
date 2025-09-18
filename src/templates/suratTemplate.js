@@ -3,7 +3,7 @@ module.exports = (data) => {
     nama,
     nik,
     tempat_lahir,
-    tanggal_lahir,
+    // tanggal_lahir,
     alamat,
     jenis_surat,
     tujuan_surat,
@@ -87,7 +87,7 @@ module.exports = (data) => {
     <table>
       <tr><td>Nama</td><td>: ${nama}</td></tr>
       <tr><td>NIK</td><td>: ${nik}</td></tr>
-      <tr><td>Tempat/Tanggal Lahir</td><td>: ${tempat_lahir}, ${tanggal_lahir}</td></tr>
+    //   <tr><td>Tempat/Tanggal Lahir</td><td>: ${tempat_lahir}, ${tanggal_lahir}</td></tr>
       <tr><td>Alamat</td><td>: ${alamat}</td></tr>
     </table>
 

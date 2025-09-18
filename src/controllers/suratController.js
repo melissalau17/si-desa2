@@ -1,8 +1,9 @@
 const suratService = require("../services/suratService");
 const { handleError } = require("../utils/errorHandler");
 const R2Service = require("../services/r2Service");
-const NotificationService = require("../services/notificationService"); 
+const { sendSuratNotification, sendSuratStatusNotification } = require("../services/notificationService"); 
 const moment = require("moment-timezone");
+const PdfService = require("../services/pdfService");
 
 exports.getAllSurat = async (req, res) => {
     try {
@@ -45,8 +46,6 @@ exports.createSurat = async (req, res) => {
 
         const photo_ktp = req.files?.photo_ktp?.[0];
         const photo_kk = req.files?.photo_kk?.[0];
-        // const foto_usaha = req.files?.foto_usaha?.[0];
-        // const gaji_ortu = req.files?.gaji_ortu?.[0];
 
         if (!photo_ktp || !photo_kk) {
             return res.status(400).json({ message: "KTP dan KK wajib diunggah!" });
@@ -54,17 +53,6 @@ exports.createSurat = async (req, res) => {
 
         const photo_ktp_url = await R2Service.uploadFile(photo_ktp.buffer, photo_ktp.mimetype);
         const photo_kk_url = await R2Service.uploadFile(photo_kk.buffer, photo_kk.mimetype);
-        // const foto_usaha_url = foto_usaha ? await R2Service.uploadFile(foto_usaha.buffer, foto_usaha.mimetype) : null;
-        // const gaji_ortu_url = gaji_ortu ? await R2Service.uploadFile(gaji_ortu.buffer, gaji_ortu.mimetype) : null;
-
-        // let parsedTanggalLahir = null;
-        // if (tanggal_lahir) {
-        //     const m = moment.tz(tanggal_lahir, "DD-MM-YYYY", "Asia/Jakarta");
-        //     if (!m.isValid()) {
-        //         return res.status(400).json({ message: "Format tanggal_lahir tidak valid!" });
-        //     }
-        //     parsedTanggalLahir = m.add(1, "day").toDate();
-        // }
 
         const newSurat = await suratService.createSurat({
             nik, nama, tempat_lahir, jenis_kelamin, agama, alamat, no_hp, email, jenis_surat, tujuan_surat, waktu_kematian,
@@ -72,7 +60,7 @@ exports.createSurat = async (req, res) => {
             tanggal: moment().tz("Asia/Jakarta").toDate(),
         });
         
-        await NotificationService.sendSuratNotification(newSurat);
+        await sendSuratNotification(newSurat);
         
         res.status(201).json({
             message: "Surat berhasil dibuat!",
@@ -92,19 +80,9 @@ exports.updateSurat = async (req, res) => {
 
         const photo_ktp = req.files?.photo_ktp?.[0];
         const photo_kk = req.files?.photo_kk?.[0];
-        // const foto_usaha = req.files?.foto_usaha?.[0];
-        // const gaji_ortu = req.files?.gaji_ortu?.[0];
 
         let photo_ktp_url = photo_ktp ? await R2Service.uploadFile(photo_ktp.buffer, photo_ktp.mimetype) : oldSurat.photo_ktp_url;
         let photo_kk_url = photo_kk ? await R2Service.uploadFile(photo_kk.buffer, photo_kk.mimetype) : oldSurat.photo_kk_url;
-        // let foto_usaha_url = foto_usaha ? await R2Service.uploadFile(foto_usaha.buffer, foto_usaha.mimetype) : oldSurat.foto_usaha_url;
-        // let gaji_ortu_url = gaji_ortu ? await R2Service.uploadFile(gaji_ortu.buffer, gaji_ortu.mimetype) : oldSurat.gaji_ortu_url;
-
-        // let parsedTanggalLahir = null;
-        // if (tanggal_lahir && typeof tanggal_lahir === "string" && tanggal_lahir.trim() !== "") {
-        //     parsedTanggalLahir = moment.tz(tanggal_lahir, "DD/MM/YYYY", "Asia/Jakarta").add(1, "day").toDate();
-        //     if (isNaN(parsedTanggalLahir.getTime())) return res.status(400).json({ message: "Format tanggal_lahir tidak valid!" });
-        // }
 
         const updatePayload = {
             nik, nama, tempat_lahir, jenis_kelamin, agama, alamat, no_hp, email, jenis_surat, tujuan_surat, waktu_kematian, status,
@@ -115,7 +93,7 @@ exports.updateSurat = async (req, res) => {
         if (!updatedSurat) return res.status(404).json({ message: "Surat tidak ditemukan!" });
         
         if (status && oldSurat.status !== updatedSurat.status) {
-            await NotificationService.sendSuratStatusNotification(updatedSurat);
+            await sendSuratStatusNotification(updatedSurat);
         }
 
         res.status(200).json({
