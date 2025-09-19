@@ -23,34 +23,57 @@ const sendPushNotification = async (tokens, payload) => {
     }
 };
 
-exports.sendBeritaNotification = async (berita) => {
+exports.sendNewBeritaNotification = async (berita) => {
     io.emit("notification", {
         title: "Berita Terbaru!",
-        body: `Berita dengan judul "${berita.judul}" telah diterbitkan atau diperbarui.`,
+        body: `Berita dengan judul "${berita.judul}" telah diterbitkan.`,
         time: berita.tanggal,
     });
-
     try {
         const adminUsers = await prisma.user.findMany({
             where: { role: "admin" },
             select: { fcmToken: true },
         });
-
         const fcmTokens = adminUsers
             .map((user) => user.fcmToken)
             .filter(Boolean);
-
         const payload = {
             title: "Berita Terbaru!",
-            body: `Berita dengan judul "${berita.judul}" telah diterbitkan atau diperbarui.`,
+            body: `Berita dengan judul "${berita.judul}" telah diterbitkan.`,
             data: {
                 beritaId: berita.berita_id.toString(),
             },
         };
-
         await sendPushNotification(fcmTokens, payload);
     } catch (error) {
-        console.error("Failed to send mobile notifications:", error);
+        console.error("Failed to send new berita notification:", error);
+    }
+};
+
+exports.sendUpdateBeritaNotification = async (berita) => {
+    io.emit("notification", {
+        title: "Berita Diperbarui!",
+        body: `Berita dengan judul "${berita.judul}" telah diperbarui.`,
+        time: new Date(),
+    });
+    try {
+        const adminUsers = await prisma.user.findMany({
+            where: { role: "admin" },
+            select: { fcmToken: true },
+        });
+        const fcmTokens = adminUsers
+            .map((user) => user.fcmToken)
+            .filter(Boolean);
+        const payload = {
+            title: "Berita Diperbarui!",
+            body: `Berita dengan judul "${berita.judul}" telah diperbarui.`,
+            data: {
+                beritaId: berita.berita_id.toString(),
+            },
+        };
+        await sendPushNotification(fcmTokens, payload);
+    } catch (error) {
+        console.error("Failed to send update berita notification:", error);
     }
 };
 

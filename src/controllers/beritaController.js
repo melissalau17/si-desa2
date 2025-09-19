@@ -2,7 +2,7 @@ const beritaService = require("../services/beritaService");
 const { handleError } = require("../utils/errorHandler");
 const moment = require("moment-timezone");
 const R2Service = require("../services/r2Service"); 
-const { sendBeritaNotification } = require("../services/notificationService");
+const { sendNewBeritaNotification, sendUpdateBeritaNotification } = require("../services/notificationService");
 
 
 exports.getAllBeritas = async (req, res) => {
@@ -65,7 +65,7 @@ exports.createBerita = async (req, res) => {
             photo_url: photoUrl,
         });
 
-        await sendBeritaNotification(newBerita);
+        await sendNewBeritaNotification(newBerita);
 
         res.status(201).json({
             message: "Berita berhasil dibuat!",
@@ -104,7 +104,7 @@ exports.updateBerita = async (req, res) => {
         const updatedBerita = await beritaService.updateBerita(req.params.id, updatePayload);
         
         if (oldBerita.status !== status || oldBerita.judul !== judul || oldBerita.kontent !== kontent) {
-            await sendBeritaNotification(updatedBerita);
+            await sendUpdateBeritaNotification(updatedBerita);
         }
 
         res.status(200).json({
