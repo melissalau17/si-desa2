@@ -53,9 +53,10 @@ exports.createLaporan = async (req, res) => {
         }
 
         const status = "Belum Dikerjakan";
-        const tanggal = moment().tz("Asia/Jakarta").format("YYYY-MM-DDTHH:mm:ss");
+        const tanggal = moment().tz("Asia/Jakarta").toDate();
 
         const photoUrl = await R2Service.uploadFile(photo_url.buffer, photo_url.mimetype);
+        const userIdFromToken = req.user.user_id; 
 
         const data = {
             nama,
@@ -63,9 +64,9 @@ exports.createLaporan = async (req, res) => {
             tanggal,
             lokasi,
             deskripsi,
-            vote: vote || 0,
+            vote: 0,
             status,
-            user_id: parseInt(user_id, 10),
+            user_id: parseInt(userIdFromToken, 10),
             photo_url: photoUrl,
         };
 
