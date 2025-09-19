@@ -2,10 +2,10 @@ const { S3Client, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/cl
 
 const r2Client = new S3Client({
     region: 'auto',
-    endpoint: process.env.CLOUDFLARE_R2_ENDPOINT,
+    endpoint: process.env.R2_ENDPOINT,
     credentials: {
-        accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID,
-        secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY,
+        accessKeyId: process.env.R2_ACCESS_KEY_ID,
+        secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
     }
 });
 
@@ -29,7 +29,7 @@ exports.uploadFile = async (fileBuffer, mimeType) => {
 };
 
 exports.deleteFile = async (fileName) => {
-  const bucketName = process.env.CLOUDFLARE_R2_BUCKET_NAME;
+  const bucketName = process.env.R2_BUCKET_NAME;
 
   const command = new DeleteObjectCommand({
     Bucket: bucketName,
