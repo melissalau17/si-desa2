@@ -1,46 +1,24 @@
 const suratModel = require("../models/SuratModel");
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 
-exports.getAllSurat = () => suratModel.findAll();
-exports.getSuratById = (id) => suratModel.findById(id);
+exports.getAllSurat = () => {
+    return suratModel.findAll({
+        include: { user: true }
+    });
+};
+exports.getSuratById = (id) => {
+    return suratModel.findById(id, {
+        include: { user: true }
+    });
+};
 exports.findByNIK = (nik) => suratModel.findByNIK(nik);
 
-exports.createSurat = (data) => {
-    const {
-        nik,
-        nama,
-        tempat_lahir,
-        // tanggal_lahir,
-        jenis_kelamin,
-        agama,
-        alamat,
-        no_hp,
-        email,
-        jenis_surat,
-        tujuan_surat,
-        photo_ktp_url,
-        photo_kk_url,
-        foto_usaha_url,
-        waktu_kematian,
-        gaji_ortu_url,
-    } = data;
-
-    return suratModel.create({
-        nik,
-        nama,
-        tempat_lahir,
-        // tanggal_lahir,
-        jenis_kelamin,
-        agama,
-        alamat,
-        jenis_surat,
-        tujuan_surat,
-        no_hp,
-        email,
-        photo_ktp: photo_ktp_url,
-        photo_kk: photo_kk_url,
-        foto_usaha: foto_usaha_url,
-        waktu_kematian,
-        gaji_ortu: gaji_ortu_url,
+exports.createSurat = async (data) => {
+    const newSurat = await suratModel.create(data);
+    
+    return suratModel.findById(newSurat.surat_id, {
+        include: { user: true }
     });
 };
 
@@ -48,7 +26,9 @@ exports.updateSurat = async (id, data) => {
     const existingSurat = await suratModel.findById(id);
     if (!existingSurat) return null;
     const updatedSurat = await suratModel.update(id, data);
-    return updatedSurat;
+    return suratModel.findById(updatedSurat.surat_id, {
+        include: { user: true }
+    });
 }
 
 exports.deleteSurat = (id) => suratModel.remove(id);

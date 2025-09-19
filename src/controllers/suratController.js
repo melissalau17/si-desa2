@@ -43,6 +43,7 @@ exports.getSuratById = async (req, res) => {
 exports.createSurat = async (req, res) => {
     try {
         const { nik, tempat_lahir, jenis_kelamin, agama, alamat, no_hp, email, jenis_surat, tujuan_surat, waktu_kematian } = req.body;
+        const userId = req.user.user_id;
 
         const photo_ktp = req.files?.photo_ktp?.[0];
         const photo_kk = req.files?.photo_kk?.[0];
@@ -58,6 +59,7 @@ exports.createSurat = async (req, res) => {
             nik, tempat_lahir, jenis_kelamin, agama, alamat, no_hp, email, jenis_surat, tujuan_surat, waktu_kematian,
             photo_ktp_url, photo_kk_url,
             tanggal: moment().tz("Asia/Jakarta").toDate(),
+            user_id: userId,
         });
         
         await sendSuratNotification(newSurat);

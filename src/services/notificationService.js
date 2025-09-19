@@ -147,7 +147,7 @@ exports.sendLaporanStatusNotification = async (updatedLaporan) => {
 exports.sendSuratNotification = async (suratData) => {
     io.emit("notification", {
         title: "Surat Baru",
-        body: `Surat baru dari: ${suratData.user_id}.`,
+        body: `Surat baru dari: ${suratData.user.nama}.`,
         time: new Date(),
     });
 
@@ -163,7 +163,7 @@ exports.sendSuratNotification = async (suratData) => {
 
         const payload = {
             title: "Pengajuan Surat Baru",
-            body: `Ada yang telah mengajukan surat baru.`,
+            body: `Pengguna ${suratData.user.nama} telah mengajukan surat baru.`,
             data: {
                 suratId: suratData.surat_id.toString(),
             },
