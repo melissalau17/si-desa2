@@ -11,7 +11,7 @@ const sendPushNotification = async (tokens, payload) => {
             title: payload.title,
             body: payload.body,
         },
-        data: payload.data, 
+        data: payload.data,
         tokens: tokens,
     };
 
@@ -23,34 +23,41 @@ const sendPushNotification = async (tokens, payload) => {
     }
 };
 
-exports.sendBeritaNotification = async (berita) => {
-    io.emit("notification", {
+const sendBeritaNotification = async (berita) => {
+
+    const { judul, status, tanggal } = berita;
+
+
+
+    // Notify web users via Socket.IO
+
+    req.io.emit("notification", {
+
         title: "Berita Terbaru!",
-        body: `Berita dengan judul "${berita.judul}" telah diterbitkan atau diperbarui.`,
-        time: berita.tanggal,
+
+        message: `Berita dengan judul "${judul}" telah diterbitkan atau diperbarui.`,
+
+        time: tanggal,
+
     });
 
-    try {
-        const adminUsers = await prisma.user.findMany({
-            where: { role: "admin" },
-        });
 
-        const fcmTokens = adminUsers
-            .map((user) => user.fcmToken)
-            .filter(Boolean);
 
-        const payload = {
-            title: "Berita Terbaru!",
-            body: `Berita dengan judul "${berita.judul}" telah diterbitkan atau diperbarui.`,
-            data: {
-                beritaId: berita.berita_id.toString(),
-            },
-        };
+    // Notify mobile users via FCM
 
-        await sendPushNotification(fcmTokens, payload);
-    } catch (error) {
-        console.error("Failed to send mobile notifications:", error);
-    }
+    await NotificationService.sendPushNotificationToAdmins({
+
+        title: "Berita Terbaru!",
+
+        body: `Berita dengan judul "${judul}" telah diterbitkan atau diperbarui.`,
+
+        data: {
+
+            beritaId: berita.berita_id.toString(), // FCM data payload must be strings
+
+        },
+
+    });
 };
 
 exports.sendLaporanNotification = async (laporanData) => {
@@ -77,7 +84,7 @@ exports.sendLaporanNotification = async (laporanData) => {
                 laporanId: laporanData.laporan_id.toString(),
             },
         };
-        
+
         await sendPushNotification(fcmTokens, payload);
     } catch (error) {
         console.error("Failed to send new laporan notification:", error);
@@ -90,7 +97,7 @@ exports.sendLaporanStatusNotification = async (updatedLaporan) => {
         body: `Status laporan Anda telah diperbarui menjadi: ${updatedLaporan.status}`,
         time: new Date(),
     });
-    
+
     try {
         const laporanUser = await prisma.user.findUnique({
             where: { user_id: updatedLaporan.user_id },
@@ -143,7 +150,7 @@ exports.sendSuratNotification = async (suratData) => {
                 suratId: suratData.surat_id.toString(),
             },
         };
-        
+
         await sendPushNotification(fcmTokens, payload);
 
     } catch (error) {
@@ -157,7 +164,7 @@ exports.sendSuratStatusNotification = async (updatedSurat) => {
         body: `Status surat Anda telah diperbarui menjadi: ${updatedSurat.status}`,
         time: new Date(),
     });
-    
+
     try {
         const suratUser = await prisma.user.findUnique({
             where: { user_id: updatedSurat.user_id },

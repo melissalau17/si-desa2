@@ -4,26 +4,6 @@ const moment = require("moment-timezone");
 const R2Service = require("../services/r2Service"); 
 const { sendBeritaNotification } = require("../services/notificationService");
 
-const sendBeritaNotification = async (berita) => {
-    const { judul, status, tanggal } = berita;
-
-    // Notify web users via Socket.IO
-    req.io.emit("notification", {
-        title: "Berita Terbaru!",
-        message: `Berita dengan judul "${judul}" telah diterbitkan atau diperbarui.`,
-        time: tanggal,
-    });
-
-    // Notify mobile users via FCM
-    await NotificationService.sendPushNotificationToAdmins({
-        title: "Berita Terbaru!",
-        body: `Berita dengan judul "${judul}" telah diterbitkan atau diperbarui.`,
-        data: {
-            beritaId: berita.berita_id.toString(), // FCM data payload must be strings
-        },
-    });
-};
-
 exports.getAllBeritas = async (req, res) => {
     try {
         const beritas = await beritaService.getAllBeritas();
