@@ -2,7 +2,7 @@ const laporanService = require("../services/laporanService");
 const { handleError } = require("../utils/errorHandler");
 const moment = require("moment-timezone");
 const R2Service = require("../services/r2Service");
-const NotificationService = require("../services/notificationService");
+const { sendLaporanNotification, sendLaporanStatusNotification } = require("../services/notificationService");
 
 exports.getAllLaporans = async (req, res) => {
     try {
@@ -53,9 +53,7 @@ exports.createLaporan = async (req, res) => {
         }
 
         const userId = req.user.user_id;
-
         const photoUrl = await R2Service.uploadFile(photoFile.buffer, photoFile.mimetype);
-
         const tanggalFormatted = moment().tz("Asia/Jakarta").format("YYYY-MM-DDTHH:mm:ss");
 
         const data = {
@@ -66,11 +64,11 @@ exports.createLaporan = async (req, res) => {
             vote: 0,
             status: "belum dikerjakan",
             user_id: userId,
-            photo_url: photoUrl,
+            photo_url: photoUrl, 
         };
 
         const newLaporan = await laporanService.createLaporan(data);
-        await NotificationService.sendLaporanNotification(newLaporan);
+        await sendLaporanNotification(newLaporan);
 
         res.status(201).json({
             message: "Laporan berhasil dibuat!",
@@ -90,8 +88,7 @@ exports.updateLaporan = async (req, res) => {
             return res.status(404).json({ message: "Laporan tidak ditemukan!" });
         }
 
-        const tanggal = moment().tz("Asia/Jakarta").format("YYYY-MM-DDTHH:mm:ss");
-        let photoUrl = oldLaporan.photo_url;
+        let photoUrl = oldLaporan.photo_url; 
 
         if (req.file) {
             const newPhoto = req.file;
@@ -99,19 +96,18 @@ exports.updateLaporan = async (req, res) => {
         }
 
         const updatePayload = {
-            deskripsi,
-            tanggal,
-            lokasi,
-            keluhan,
-            vote: parseInt(vote, 10) || oldLaporan.vote,
-            status,
-            photo_url: photoUrl,
+            ...(deskripsi !== undefined && { deskripsi }),
+            ...(lokasi !== undefined && { lokasi }),
+            ...(keluhan !== undefined && { keluhan }),
+            ...(vote !== undefined && { vote: parseInt(vote, 10) }),
+            ...(status !== undefined && { status }),
+            ...(photoUrl !== undefined && { photo_url: photoUrl }), 
         };
 
         const updatedLaporan = await laporanService.updateLaporan(req.params.id, updatePayload);
-        
+
         if (updatedLaporan.status !== oldLaporan.status) {
-            await NotificationService.sendLaporanStatusNotification(updatedLaporan);
+            await sendLaporanStatusNotification(updatedLaporan);
         }
 
         res.status(200).json({

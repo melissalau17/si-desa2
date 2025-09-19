@@ -26,7 +26,7 @@ const sendPushNotification = async (tokens, payload) => {
 exports.sendBeritaNotification = async (berita) => {
     io.emit("notification", {
         title: "Berita Terbaru!",
-        message: `Berita dengan judul "${berita.judul}" telah diterbitkan atau diperbarui.`,
+        body: `Berita dengan judul "${berita.judul}" telah diterbitkan atau diperbarui.`,
         time: berita.tanggal,
     });
 
@@ -53,8 +53,73 @@ exports.sendBeritaNotification = async (berita) => {
     }
 };
 
+exports.sendLaporanNotification = async (laporanData) => {
+    io.emit("notification", {
+        title: "Laporan Baru",
+        body: `Laporan baru dari: ${laporanData.nama || 'Pengguna'}.`,
+        time: new Date(),
+    });
+
+    try {
+        const adminUsers = await prisma.user.findMany({
+            where: { role: "admin" },
+            select: { fcmToken: true },
+        });
+
+        const fcmTokens = adminUsers
+            .map((user) => user.fcmToken)
+            .filter(Boolean);
+
+        const payload = {
+            title: "Pengajuan Laporan Baru",
+            body: `Pengguna ${laporanData.nama || 'Pengguna'} telah membuat laporan baru.`,
+            data: {
+                laporanId: laporanData.laporan_id.toString(),
+            },
+        };
+        
+        await sendPushNotification(fcmTokens, payload);
+    } catch (error) {
+        console.error("Failed to send new laporan notification:", error);
+    }
+};
+
+exports.sendLaporanStatusNotification = async (updatedLaporan) => {
+    io.emit("notification", {
+        title: "Status Laporan Diperbarui",
+        body: `Status laporan Anda telah diperbarui menjadi: ${updatedLaporan.status}`,
+        time: new Date(),
+    });
+    
+    try {
+        const laporanUser = await prisma.user.findUnique({
+            where: { user_id: updatedLaporan.user_id },
+            select: { fcmToken: true },
+        });
+
+        if (!laporanUser || !laporanUser.fcmToken) {
+            console.log("No FCM token found for the user, skipping push notification.");
+            return;
+        }
+
+        const fcmTokens = [laporanUser.fcmToken];
+
+        const payload = {
+            title: "Status Laporan Anda Diperbarui",
+            body: `Status laporan Anda untuk ${updatedLaporan.keluhan} telah diperbarui menjadi: ${updatedLaporan.status}.`,
+            data: {
+                laporanId: updatedLaporan.laporan_id.toString(),
+                status: updatedLaporan.status,
+            },
+        };
+
+        await sendPushNotification(fcmTokens, payload);
+    } catch (error) {
+        console.error("Failed to send laporan status notification:", error);
+    }
+};
+
 exports.sendSuratNotification = async (suratData) => {
-    // 1. Emit a real-time notification via Socket.IO
     io.emit("notification", {
         title: "Surat Baru",
         body: `Surat baru dari: ${suratData.nama}.`,
@@ -62,18 +127,15 @@ exports.sendSuratNotification = async (suratData) => {
     });
 
     try {
-        // 2. Find all admin users to send a push notification
         const adminUsers = await prisma.user.findMany({
             where: { role: "admin" },
             select: { fcmToken: true },
         });
 
-        // 3. Collect all valid FCM tokens
         const fcmTokens = adminUsers
             .map((user) => user.fcmToken)
             .filter(Boolean);
 
-        // 4. Construct the push notification payload
         const payload = {
             title: "Pengajuan Surat Baru",
             body: `Pengguna ${suratData.nama} telah mengajukan surat baru.`,
@@ -82,7 +144,6 @@ exports.sendSuratNotification = async (suratData) => {
             },
         };
         
-        // 5. Send the push notification
         await sendPushNotification(fcmTokens, payload);
 
     } catch (error) {
@@ -91,7 +152,6 @@ exports.sendSuratNotification = async (suratData) => {
 };
 
 exports.sendSuratStatusNotification = async (updatedSurat) => {
-    // 1. Emit a real-time notification via Socket.IO
     io.emit("notification", {
         title: "Status Surat Diperbarui",
         body: `Status surat Anda telah diperbarui menjadi: ${updatedSurat.status}`,
@@ -99,13 +159,11 @@ exports.sendSuratStatusNotification = async (updatedSurat) => {
     });
     
     try {
-        // 2. Find the user who submitted the letter
         const suratUser = await prisma.user.findUnique({
             where: { user_id: updatedSurat.user_id },
             select: { fcmToken: true },
         });
 
-        // 3. Collect the user's FCM token
         if (!suratUser || !suratUser.fcmToken) {
             console.log("No FCM token found for the user, skipping push notification.");
             return;
@@ -113,7 +171,6 @@ exports.sendSuratStatusNotification = async (updatedSurat) => {
 
         const fcmTokens = [suratUser.fcmToken];
 
-        // 4. Construct the push notification payload
         const payload = {
             title: "Status Surat Anda Diperbarui",
             body: `Status surat Anda untuk ${updatedSurat.jenis_surat} telah diperbarui menjadi: ${updatedSurat.status}.`,
@@ -123,7 +180,6 @@ exports.sendSuratStatusNotification = async (updatedSurat) => {
             },
         };
 
-        // 5. Send the push notification
         await sendPushNotification(fcmTokens, payload);
 
     } catch (error) {
@@ -143,7 +199,6 @@ exports.sendUserRegistrationNotification = async (user, socket) => {
     }
 
     try {
-        // Find all admin users
         const adminUsers = await prisma.user.findMany({
             where: { role: "admin" },
             select: { fcmToken: true },

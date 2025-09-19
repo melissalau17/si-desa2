@@ -2,7 +2,7 @@ const beritaService = require("../services/beritaService");
 const { handleError } = require("../utils/errorHandler");
 const moment = require("moment-timezone");
 const R2Service = require("../services/r2Service"); 
-const NotificationService = require("../services/notificationService"); 
+const { sendBeritaNotification } = require("../services/notificationService");
 
 const sendBeritaNotification = async (berita) => {
     const { judul, status, tanggal } = berita;
@@ -73,7 +73,6 @@ exports.createBerita = async (req, res) => {
             return res.status(400).json({ message: "Photo harus diisi!" });
         }
 
-        // Upload the image to Cloudflare R2 and get the public URL
         const photoUrl = await R2Service.uploadFile(photo_url.buffer, photo_url.mimetype);
 
         const newBerita = await beritaService.createBerita({
@@ -118,12 +117,11 @@ exports.updateBerita = async (req, res) => {
             tanggal,
             kontent,
             status,
-            photo_url: photoUrl, // Use the new or old URL
+            photo_url: photoUrl,
         };
 
         const updatedBerita = await beritaService.updateBerita(req.params.id, updatePayload);
         
-        // Trigger notifications only if the status or content changed
         if (oldBerita.status !== status || oldBerita.judul !== judul || oldBerita.kontent !== kontent) {
             await sendBeritaNotification(updatedBerita);
         }
