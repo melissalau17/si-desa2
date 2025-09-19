@@ -56,15 +56,17 @@ exports.createLaporan = async (req, res) => {
 
         const photoUrl = await R2Service.uploadFile(photoFile.buffer, photoFile.mimetype);
 
+        const tanggalFormatted = moment().tz("Asia/Jakarta").format("YYYY-MM-DDTHH:mm:ss");
+
         const data = {
             keluhan,
             deskripsi,
             lokasi,
-            tanggal: moment().tz("Asia/Jakarta").toDate(),
+            tanggal: tanggalFormatted,
             vote: 0,
             status: "belum dikerjakan",
             user_id: userId,
-            photo: photoUrl,
+            photo_url: photoUrl,
         };
 
         const newLaporan = await laporanService.createLaporan(data);
@@ -89,7 +91,7 @@ exports.updateLaporan = async (req, res) => {
         }
 
         const tanggal = moment().tz("Asia/Jakarta").format("YYYY-MM-DDTHH:mm:ss");
-        let photoUrl = oldLaporan.photo;
+        let photoUrl = oldLaporan.photo_url;
 
         if (req.file) {
             const newPhoto = req.file;
@@ -103,7 +105,7 @@ exports.updateLaporan = async (req, res) => {
             keluhan,
             vote: parseInt(vote, 10) || oldLaporan.vote,
             status,
-            photo: photoUrl,
+            photo_url: photoUrl,
         };
 
         const updatedLaporan = await laporanService.updateLaporan(req.params.id, updatePayload);
