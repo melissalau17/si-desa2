@@ -48,13 +48,13 @@ exports.createBerita = async (req, res) => {
         }
 
         const tanggal = moment().tz("Asia/Jakarta").toISOString();
-        const photo_url = req.file;
+        const photoFile = req.file;
 
-        if (!photo_url) {
+        if (!photoFile) {
             return res.status(400).json({ message: "Photo harus diisi!" });
         }
 
-        const photoUrl = await R2Service.uploadFile(photo_url.buffer, photo_url.mimetype);
+        const photoUrl = await R2Service.uploadFile(photoFile.buffer, photoFile.mimetype);
 
         const newBerita = await beritaService.createBerita({
             judul,

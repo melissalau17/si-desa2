@@ -124,7 +124,7 @@ exports.updateUser = async (req, res) => {
         const updatePayload = {
             nama, username, email, NIK, agama, alamat, jenis_kel, no_hp, role,
             ...(hashedPassword && { password: hashedPassword }),
-            photo_url: photoUrl, // Explicitly set the photo URL
+            photo_url: photoUrl,
         };
 
         const updatedUser = await userService.updateUser(userId, updatePayload);
