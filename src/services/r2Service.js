@@ -1,4 +1,3 @@
-const s3Client = require('../r2Config');
 const { S3Client, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
 
 const r2Client = new S3Client({
@@ -22,7 +21,7 @@ exports.uploadFile = async (fileBuffer, mimeType) => {
     
     try {
         await r2Client.send(new PutObjectCommand(params));
-        return fileName; // ✅ Return just the object key (file path)
+        return fileName;
     } catch (error) {
         console.error("Error uploading file to R2:", error);
         throw error;
@@ -38,7 +37,7 @@ exports.deleteFile = async (fileName) => {
   });
 
   try {
-    await s3Client.send(command);
+    await r2Client.send(command);
     return true;
   } catch (error) {
     console.error('Error deleting file from R2:', error);
