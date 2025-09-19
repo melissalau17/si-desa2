@@ -1,26 +1,32 @@
 const s3Client = require('../r2Config');
-const { PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
+const { S3Client, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
 
-// r2service.js
+const r2Client = new S3Client({
+    region: 'auto',
+    endpoint: process.env.CLOUDFLARE_R2_ENDPOINT,
+    credentials: {
+        accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID,
+        secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY,
+    }
+});
+
 exports.uploadFile = async (fileBuffer, mimeType) => {
-  const bucketName = process.env.R2_BUCKET_NAME;
-  const fileName = `uploads/${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
-
-  const command = new PutObjectCommand({
-    Bucket: bucketName,
-    Key: fileName,
-    Body: fileBuffer,
-    ContentType: mimeType,
-  });
-
-  try {
-    await s3Client.send(command);
+    const fileName = `uploads/${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
     
-    return `https://${bucketName}.${process.env.R2_ACCOUNT_ID}.r2.dev/${fileName}`;
-  } catch (error) {
-    console.error('Error uploading file to R2:', error);
-    throw new Error('Failed to upload file to R2');
-  }
+    const params = {
+        Bucket: 'sistemdesa',
+        Key: fileName,
+        Body: fileBuffer,
+        ContentType: mimeType,
+    };
+    
+    try {
+        await r2Client.send(new PutObjectCommand(params));
+        return fileName; // ✅ Return just the object key (file path)
+    } catch (error) {
+        console.error("Error uploading file to R2:", error);
+        throw error;
+    }
 };
 
 exports.deleteFile = async (fileName) => {

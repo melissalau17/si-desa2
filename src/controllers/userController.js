@@ -118,11 +118,9 @@ exports.updateUser = async (req, res) => {
         let photoUrl = existingUser.photo_url;
 
         if (photo_url) {
-            // A new photo was uploaded, so upload it and get the new URL
             photoUrl = await R2Service.uploadFile(photo_url.buffer, photo_url.mimetype);
         }
 
-        // Construct the update payload to be sent to the database
         const updatePayload = {
             nama, username, email, NIK, agama, alamat, jenis_kel, no_hp, role,
             ...(hashedPassword && { password: hashedPassword }),

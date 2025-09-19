@@ -4,6 +4,7 @@ const moment = require("moment-timezone");
 const R2Service = require("../services/r2Service"); 
 const { sendBeritaNotification } = require("../services/notificationService");
 
+
 exports.getAllBeritas = async (req, res) => {
     try {
         const beritas = await beritaService.getAllBeritas();
