@@ -1,7 +1,7 @@
 const admin = require('firebase-admin');
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
-const { io } = require('../index');
+const { io } = require('../index'); 
 
 const sendPushNotification = async (tokens, payload) => {
     if (!tokens || tokens.length === 0) return;
