@@ -23,7 +23,7 @@ const sendPushNotification = async (tokens, payload) => {
     }
 };
 
-exports.sendNewBeritaNotification = async (berita) => {
+exports.sendBeritaNotification = async (berita) => {
     io.emit("notification", {
         title: "Berita Terbaru!",
         body: `Berita dengan judul "${berita.judul}" telah diterbitkan.`,
@@ -147,7 +147,7 @@ exports.sendLaporanStatusNotification = async (updatedLaporan) => {
 exports.sendSuratNotification = async (suratData) => {
     io.emit("notification", {
         title: "Surat Baru",
-        body: `Surat baru dari: ${suratData.nama}.`,
+        body: `Surat baru dari: ${suratData.user_id}.`,
         time: new Date(),
     });
 
@@ -163,7 +163,7 @@ exports.sendSuratNotification = async (suratData) => {
 
         const payload = {
             title: "Pengajuan Surat Baru",
-            body: `Pengguna ${suratData.nama} telah mengajukan surat baru.`,
+            body: `Ada yang telah mengajukan surat baru.`,
             data: {
                 suratId: suratData.surat_id.toString(),
             },
