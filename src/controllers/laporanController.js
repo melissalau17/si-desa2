@@ -1,7 +1,7 @@
 const laporanService = require("../services/laporanService");
 const { handleError } = require("../utils/errorHandler");
 const moment = require("moment-timezone");
-const R2Service = require("../services/r2Service"); 
+const R2Service = require("../services/r2Service");
 const NotificationService = require("../services/notificationService");
 
 exports.getAllLaporans = async (req, res) => {
@@ -42,36 +42,32 @@ exports.getLaporanById = async (req, res) => {
 
 exports.createLaporan = async (req, res) => {
     try {
-        const { nama, keluhan, deskripsi, lokasi } = req.body;
-        const photo_url = req.file;
+        const { keluhan, deskripsi, lokasi } = req.body;
+        const photoFile = req.file;
 
-        if (!nama || !lokasi || !keluhan || !deskripsi) {
+        if (!keluhan || !deskripsi || !lokasi) {
             return res.status(400).json({ message: "Semua field harus diisi!" });
         }
-        if (!photo_url) {
+        if (!photoFile) {
             return res.status(400).json({ message: "Foto harus diunggah!" });
         }
 
-        const status = "Belum Dikerjakan";
-        const tanggal = moment().tz("Asia/Jakarta").toDate();
+        const userId = req.user.user_id;
 
-        const photoUrl = await R2Service.uploadFile(photo_url.buffer, photo_url.mimetype);
-        const userIdFromToken = req.user.user_id; 
+        const photoUrl = await R2Service.uploadFile(photoFile.buffer, photoFile.mimetype);
 
         const data = {
-            nama,
             keluhan,
-            tanggal,
-            lokasi,
             deskripsi,
+            lokasi,
+            tanggal: moment().tz("Asia/Jakarta").toDate(),
             vote: 0,
-            status,
-            user_id: parseInt(userIdFromToken, 10),
-            photo_url: photoUrl,
+            status: "belum dikerjakan",
+            user_id: userId,
+            photo: photoUrl,
         };
 
         const newLaporan = await laporanService.createLaporan(data);
-
         await NotificationService.sendLaporanNotification(newLaporan);
 
         res.status(201).json({
@@ -86,14 +82,14 @@ exports.createLaporan = async (req, res) => {
 
 exports.updateLaporan = async (req, res) => {
     try {
-        const { nama, deskripsi, lokasi, keluhan, vote, status } = req.body;
+        const { deskripsi, lokasi, keluhan, vote, status } = req.body;
         const oldLaporan = await laporanService.getLaporanById(req.params.id);
         if (!oldLaporan) {
             return res.status(404).json({ message: "Laporan tidak ditemukan!" });
         }
 
         const tanggal = moment().tz("Asia/Jakarta").format("YYYY-MM-DDTHH:mm:ss");
-        let photoUrl = oldLaporan.photo_url; 
+        let photoUrl = oldLaporan.photo;
 
         if (req.file) {
             const newPhoto = req.file;
@@ -101,14 +97,13 @@ exports.updateLaporan = async (req, res) => {
         }
 
         const updatePayload = {
-            nama,
             deskripsi,
             tanggal,
             lokasi,
             keluhan,
             vote: parseInt(vote, 10) || oldLaporan.vote,
             status,
-            photo_url: photoUrl,
+            photo: photoUrl,
         };
 
         const updatedLaporan = await laporanService.updateLaporan(req.params.id, updatePayload);
