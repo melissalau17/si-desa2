@@ -1,5 +1,3 @@
-// In your suratController.js
-
 const suratService = require("../services/suratService");
 const { handleError } = require("../utils/errorHandler");
 const R2Service = require("../services/r2Service");
@@ -78,14 +76,11 @@ exports.updateSurat = async (req, res) => {
         const { status } = req.body;
         const suratId = req.params.id;
         
-        // Fetch the old surat data to compare the status later
         const oldSurat = await suratService.getSuratById(suratId);
         if (!oldSurat) return res.status(404).json({ message: "Surat tidak ditemukan!" });
 
-        // Normalize the status value to lowercase to avoid case-sensitivity issues
         const newStatus = status ? status.toLowerCase() : undefined;
 
-        // Check if the status is actually changing to avoid unnecessary updates
         if (newStatus && oldSurat.status === newStatus) {
             return res.status(200).json({
                 message: "Status surat tidak berubah!",
@@ -94,14 +89,12 @@ exports.updateSurat = async (req, res) => {
         }
 
         const updatePayload = {
-            // Only update the status field
             status: newStatus,
         };
 
         const updatedSurat = await suratService.updateSurat(suratId, updatePayload);
         if (!updatedSurat) return res.status(404).json({ message: "Surat tidak ditemukan!" });
         
-        // If the status has actually changed, send a notification
         if (newStatus && oldSurat.status !== updatedSurat.status) {
             await sendSuratStatusNotification(updatedSurat);
         }
@@ -128,13 +121,21 @@ exports.deleteSurat = async (req, res) => {
 exports.printSurat = async (req, res) => {
     try {
         const suratId = req.params.id;
+
+        const surat = await suratService.getSuratById(suratId);
+        
+        if (!surat) {
+             return res.status(404).json({
+                message: `Surat dengan ID ${suratId} tidak ditemukan!`,
+            });
+        }
         
         if (!PdfService) {
             console.error("PdfService module is not available.");
             return res.status(500).send("Gagal mencetak surat: PdfService tidak ditemukan.");
         }
 
-        const pdfBuffer = await PdfService.generateSuratPdf(suratId);
+        const pdfBuffer = await PdfService.generateSuratPdf(surat);
         
         res.set({
             "Content-Type": "application/pdf",
