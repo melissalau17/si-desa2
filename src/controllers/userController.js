@@ -16,7 +16,6 @@ exports.getAllUsers = async (req, res) => {
                 data: [],
             });
         }
-        // The service should now return user data with a photo_url field
         res.status(200).json({
             message: "User berhasil dimuat!",
             data: users,

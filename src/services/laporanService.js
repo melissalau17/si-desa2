@@ -1,6 +1,5 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
-const { Buffer } = require("buffer");
 
 exports.getAllLaporans = async () => {
     return await prisma.laporan.findMany({
@@ -24,19 +23,23 @@ exports.getLaporanById = async (id) => {
 };
 
 exports.createLaporan = async (data) => {
-    const { nama, keluhan, photoUrl, tanggal, deskripsi, lokasi, vote, status, user_id } = data;
+    const { keluhan, photo_url, tanggal, deskripsi, lokasi, vote, status, user_id } = data;
 
     return await prisma.laporan.create({
         data: {
-            nama,
             keluhan,
             tanggal,
             deskripsi,
             lokasi,
             vote: vote || 0,
             status,
-            photo_url: photoUrl,
+            photo_url,
             user_id,
+        },
+        include: {
+            user: {
+                select: { nama: true, no_hp: true }
+            }
         }
     });
 };

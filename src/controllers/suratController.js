@@ -74,40 +74,34 @@ exports.createSurat = async (req, res) => {
 };
 
 exports.updateSurat = async (req, res) => {
-    try {
-        const { status } = req.body;
-        const suratId = req.params.id;
-        
-        const oldSurat = await suratService.getSuratById(suratId);
-        if (!oldSurat) return res.status(404).json({ message: "Surat tidak ditemukan!" });
+  try {
+    const { status } = req.body;
+    const suratId = req.params.id;
 
-        const newStatus = status ? status.toLowerCase() : undefined;
+    const oldSurat = await suratService.getSuratById(suratId);
+    if (!oldSurat) return res.status(404).json({ message: "Surat tidak ditemukan!" });
 
-        if (newStatus && oldSurat.status === newStatus) {
-            return res.status(200).json({
-                message: "Status surat tidak berubah!",
-                data: oldSurat,
-            });
-        }
-
-        const updatePayload = {
-            status: newStatus,
-        };
-
-        const updatedSurat = await suratService.updateSurat(suratId, updatePayload);
-        if (!updatedSurat) return res.status(404).json({ message: "Surat tidak ditemukan!" });
-        
-        if (newStatus && oldSurat.status !== updatedSurat.status) {
-            await sendSuratStatusNotification(updatedSurat);
-        }
-
-        res.status(200).json({
-            message: "Surat berhasil diperbarui!",
-            data: updatedSurat,
-        });
-    } catch (error) {
-        handleError(res, error);
+    if (status && oldSurat.status === status) {
+      return res.status(200).json({
+        message: "Status surat tidak berubah!",
+        data: oldSurat,
+      });
     }
+
+    const updatedSurat = await suratService.updateSurat(suratId, { status });
+    if (!updatedSurat) return res.status(404).json({ message: "Surat tidak ditemukan!" });
+
+    if (status && oldSurat.status !== updatedSurat.status) {
+      await sendSuratStatusNotification(updatedSurat);
+    }
+
+    res.status(200).json({
+      message: "Surat berhasil diperbarui!",
+      data: updatedSurat,
+    });
+  } catch (error) {
+    handleError(res, error);
+  }
 };
 
 exports.deleteSurat = async (req, res) => {
