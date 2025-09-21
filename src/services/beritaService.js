@@ -1,29 +1,3 @@
-const beritaModel = require("../models/beritaModel");
-const r2Client = require('../r2Config');
-const { DeleteObjectCommand } = require('@aws-sdk/client-s3');
-
-exports.getAllBeritas = async () => {
-  return await prisma.berita.findMany({
-    include: {
-      user: {
-        select: { nama: true },
-      },
-    },
-    orderBy: { tanggal: 'desc' }, // optional: biar terbaru dulu
-  });
-};
-
-exports.getBeritaById = async (berita_id) => {
-  return await prisma.berita.findUnique({
-    where: { berita_id: parseInt(berita_id, 10) },
-    include: {
-      user: {
-        select: { nama: true },
-      },
-    },
-  });
-};
-
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const r2Client = require('../r2Config');
