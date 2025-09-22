@@ -2,15 +2,30 @@ const userModel = require("../models/userModel");
 const { hashPassword, verifyPassword } = require("../utils/hash");
 const { createError } = require("../utils/errorHandler");
 const r2Client = require('../r2Config');
-const R2Service = require("../services/r2Service"); 
+const R2Service = require("../services/r2Service");
 const { DeleteObjectCommand } = require('@aws-sdk/client-s3');
+const PUBLIC_URL = process.env.R2_PUBLIC_URL;
 
-exports.getAllUsers = () => userModel.findAll();
+function normalizePhotoUrl(photoUrl) {
+    if (!photoUrl) return null;
+    return photoUrl.startsWith("http") ? photoUrl : `${PUBLIC_URL}/${photoUrl}`;
+}
 
-exports.getUserById = (id) => userModel.findById(id);
+exports.getAllUsers = async () => {
+    const users = await userModel.findAll();
+    return users.map(u => ({ ...u, photo_url: normalizePhotoUrl(u.photo_url) }));
+};
+
+exports.getUserById = async (id) => {
+    const user = await userModel.findById(id);
+    if (!user) return null;
+    return { ...user, photo_url: normalizePhotoUrl(user.photo_url) };
+};
 
 exports.findByNIK = async (NIK) => {
-    return await userModel.findByNIK(NIK);
+    const user = await userModel.findByNIK(NIK);
+    if (!user) return null;
+    return { ...user, photo_url: normalizePhotoUrl(user.photo_url) };
 };
 
 exports.createUser = async (data, file) => {
@@ -31,7 +46,6 @@ exports.createUser = async (data, file) => {
 
     let photoUrl = null;
     if (file) {
-        // Upload ke R2
         photoUrl = await R2Service.uploadFile(file.buffer, file.mimetype);
     }
 
@@ -71,26 +85,23 @@ exports.updateUser = async (id, data, file) => {
         updateData.password = await hashPassword(data.password);
     }
 
-    // Kalau ada file baru
     if (file) {
-        // Hapus file lama
         if (existingUser.photo_url) {
-            const oldKey = existingUser.photo_url.replace(`${process.env.R2_PUBLIC_URL}/`, '');
+            const oldKey = existingUser.photo_url.replace(`${PUBLIC_URL}/`, "");
             await R2Service.deleteFile(oldKey);
         }
-        // Upload file baru
         const newPhotoUrl = await R2Service.uploadFile(file.buffer, file.mimetype);
         updateData.photo_url = newPhotoUrl;
     } else if (data.photo_url === null) {
-        // Hapus foto
         if (existingUser.photo_url) {
-            const oldKey = existingUser.photo_url.replace(`${process.env.R2_PUBLIC_URL}/`, '');
+            const oldKey = existingUser.photo_url.replace(`${PUBLIC_URL}/`, "");
             await R2Service.deleteFile(oldKey);
         }
         updateData.photo_url = null;
     }
 
-    return userModel.update(id, updateData);
+    const updatedUser = await userModel.update(id, updateData);
+    return { ...updatedUser, photo_url: normalizePhotoUrl(updatedUser.photo_url) };
 };
 
 exports.deleteUser = async (id) => {
@@ -98,25 +109,26 @@ exports.deleteUser = async (id) => {
     if (!user) return null;
 
     if (user.photo_url) {
-        const photoKey = user.photo_url.split('/').slice(4).join('/'); 
+        const photoKey = user.photo_url.replace(`${PUBLIC_URL}/`, "");
         await r2Client.send(new DeleteObjectCommand({
-            Bucket: 'sistemdesa',
-            Key: photoKey
+            Bucket: process.env.R2_BUCKET_NAME,
+            Key: photoKey,
         }));
     }
 
     return userModel.remove(id);
 };
+
 exports.loginUser = async (identifier, password) => {
     const user = await userModel.findByUsernameOrEmail(identifier);
     if (!user) {
         throw createError("Email atau username tidak ditemukan!", 404);
     }
-    
+
     const isMatch = await verifyPassword(password, user.password);
     if (!isMatch) {
         throw createError("Password salah!", 401);
     }
-    
-    return user;
+
+    return { ...user, photo_url: normalizePhotoUrl(user.photo_url) };
 };

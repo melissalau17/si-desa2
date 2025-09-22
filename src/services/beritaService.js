@@ -2,28 +2,30 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const r2Client = require('../r2Config');
 const { DeleteObjectCommand } = require('@aws-sdk/client-s3');
+const beritaModel = require("../models/beritaModel");
+
+const PUBLIC_URL = process.env.R2_PUBLIC_URL;
+
+function normalizePhotoUrl(photoUrl) {
+  if (!photoUrl) return null;
+  return photoUrl.startsWith("http") ? photoUrl : `${PUBLIC_URL}/${photoUrl}`;
+}
 
 exports.getAllBeritas = async () => {
-  return await prisma.berita.findAll({
-    include: {
-      user: { select: { nama: true } },
-    },
-  });
+  const beritas = await beritaModel.findAll();
+  return beritas.map(b => ({ ...b, photo_url: normalizePhotoUrl(b.photo_url) }));
 };
 
 exports.getBeritaById = async (berita_id) => {
-  return await prisma.berita.findUnique({
-    where: { berita_id: parseInt(berita_id, 10) },
-    include: {
-      user: { select: { nama: true } },
-    },
-  });
+  const berita = await beritaModel.findById(berita_id);
+  if (!berita) return null;
+  return { ...berita, photo_url: normalizePhotoUrl(berita.photo_url) };
 };
 
 exports.createBerita = async (data) => {
   const { judul, kategori, photo_url, tanggal, kontent, status, user_id } = data;
 
-  return await prisma.berita.create({
+  const newBerita = await prisma.berita.create({
     data: {
       judul,
       kategori,
@@ -31,7 +33,7 @@ exports.createBerita = async (data) => {
       kontent,
       status,
       photo_url,
-      user_id, 
+      user_id,
     },
     include: {
       user: {
@@ -39,10 +41,14 @@ exports.createBerita = async (data) => {
       },
     },
   });
+
+  return { ...newBerita, photo_url: normalizePhotoUrl(newBerita.photo_url) };
 };
 
 exports.updateBerita = async (berita_id, data, photoUrl) => {
-  const existing = await prisma.berita.findUnique({ where: { berita_id: parseInt(berita_id, 10) } });
+  const existing = await prisma.berita.findUnique({
+    where: { berita_id: parseInt(berita_id, 10) }
+  });
   if (!existing) return null;
 
   const updateData = {
@@ -56,17 +62,23 @@ exports.updateBerita = async (berita_id, data, photoUrl) => {
 
   if (photoUrl) {
     if (existing.photo_url) {
-      const oldKey = existing.photo_url.split('/').slice(4).join('/');
-      await r2Client.send(new DeleteObjectCommand({ Bucket: 'sistemdesa', Key: oldKey }));
+      const oldKey = existing.photo_url.replace(`${PUBLIC_URL}/`, "");
+      await r2Client.send(new DeleteObjectCommand({
+        Bucket: process.env.R2_BUCKET_NAME,
+        Key: oldKey
+      }));
     }
     updateData.photo_url = photoUrl;
   } else if (data.photo_url === null && existing.photo_url) {
-    const oldKey = existing.photo_url.split('/').slice(4).join('/');
-    await r2Client.send(new DeleteObjectCommand({ Bucket: 'sistemdesa', Key: oldKey }));
+    const oldKey = existing.photo_url.replace(`${PUBLIC_URL}/`, "");
+    await r2Client.send(new DeleteObjectCommand({
+      Bucket: process.env.R2_BUCKET_NAME,
+      Key: oldKey
+    }));
     updateData.photo_url = null;
   }
 
-  return await prisma.berita.update({
+  const updated = await prisma.berita.update({
     where: { berita_id: parseInt(berita_id, 10) },
     data: updateData,
     include: {
@@ -75,16 +87,25 @@ exports.updateBerita = async (berita_id, data, photoUrl) => {
       },
     },
   });
+
+  return { ...updated, photo_url: normalizePhotoUrl(updated.photo_url) };
 };
 
 exports.deleteBerita = async (berita_id) => {
-  const berita = await prisma.berita.findUnique({ where: { berita_id: parseInt(berita_id, 10) } });
+  const berita = await prisma.berita.findUnique({
+    where: { berita_id: parseInt(berita_id, 10) }
+  });
   if (!berita) return null;
 
   if (berita.photo_url) {
-    const key = berita.photo_url.split('/').slice(4).join('/');
-    await r2Client.send(new DeleteObjectCommand({ Bucket: 'sistemdesa', Key: key }));
+    const key = berita.photo_url.replace(`${PUBLIC_URL}/`, "");
+    await r2Client.send(new DeleteObjectCommand({
+      Bucket: process.env.R2_BUCKET_NAME,
+      Key: key
+    }));
   }
 
-  return await prisma.berita.delete({ where: { berita_id: parseInt(berita_id, 10) } });
+  return await prisma.berita.delete({
+    where: { berita_id: parseInt(berita_id, 10) }
+  });
 };
