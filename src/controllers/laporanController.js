@@ -64,7 +64,7 @@ exports.createLaporan = async (req, res) => {
             vote: 0,
             status: "belum dikerjakan",
             user_id: userId,
-            photo_url: photoUrl, 
+            photo_url: photoUrl,
         };
 
         const newLaporan = await laporanService.createLaporan(data);
@@ -79,20 +79,19 @@ exports.createLaporan = async (req, res) => {
     }
 };
 
-
 exports.updateLaporan = async (req, res) => {
     try {
         const { deskripsi, lokasi, keluhan, vote, status } = req.body;
-        const oldLaporan = await laporanService.getLaporanById(req.params.id);
+        const laporanId = req.params.id;
+
+        const oldLaporan = await laporanService.getLaporanById(laporanId);
         if (!oldLaporan) {
             return res.status(404).json({ message: "Laporan tidak ditemukan!" });
         }
 
-        let photoUrl = oldLaporan.photo_url; 
-
+        let photoUrl = oldLaporan.photo_url;
         if (req.file) {
-            const newPhoto = req.file;
-            photoUrl = await R2Service.uploadFile(newPhoto.buffer, newPhoto.mimetype);
+            photoUrl = await R2Service.uploadFile(req.file.buffer, req.file.mimetype);
         }
 
         const updatePayload = {
@@ -101,12 +100,12 @@ exports.updateLaporan = async (req, res) => {
             ...(keluhan !== undefined && { keluhan }),
             ...(vote !== undefined && { vote: parseInt(vote, 10) }),
             ...(status !== undefined && { status }),
-            ...(photoUrl !== undefined && { photo_url: photoUrl }), 
+            photo_url: photoUrl,
         };
 
-        const updatedLaporan = await laporanService.updateLaporan(req.params.id, updatePayload);
+        const updatedLaporan = await laporanService.updateLaporan(laporanId, updatePayload);
 
-        if (updatedLaporan.status !== oldLaporan.status) {
+        if (status && updatedLaporan.status !== oldLaporan.status) {
             await sendLaporanStatusNotification(updatedLaporan);
         }
 
@@ -118,6 +117,7 @@ exports.updateLaporan = async (req, res) => {
         handleError(res, error);
     }
 };
+
 
 exports.deleteLaporan = async (req, res) => {
     try {

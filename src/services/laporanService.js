@@ -56,15 +56,16 @@ exports.updateLaporan = async (id, data) => {
   const { photoUrl, ...updatePayload } = data;
 
   if (photoUrl) {
-    updatePayload.photo_url = photoUrl; // fix field name
+    updatePayload.photo_url = photoUrl; 
   }
 
-  const updated = await prisma.laporan.update({
+  return await prisma.laporan.update({
     where: { laporan_id: parseInt(id) },
     data: updatePayload,
+    include: {
+      user: { select: { nama: true, no_hp: true } }, 
+    },
   });
-
-  return { ...updated, photo_url: normalizePhotoUrl(updated.photo_url) };
 };
 
 exports.deleteLaporan = async (id) => {
