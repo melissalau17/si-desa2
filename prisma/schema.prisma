@@ -28,18 +28,6 @@ model User {
   @@map("user")
 }
 
-model Keuangan {
-  keuangan_id    Int      @id @default(autoincrement())
-  jenisTransaksi String
-  keterangan     String
-  kategori       String
-  tanggal        DateTime
-  jumlah         Decimal  @db.Decimal(15, 2)
-  catatan        String
-
-  @@map("keuangan")
-}
-
 model Berita {
   berita_id Int     @id @default(autoincrement())
   judul     String

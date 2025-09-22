@@ -4,12 +4,10 @@ const cors = require("cors");
 const http = require("http");
 const { Server } = require("socket.io");
 
-// Load environment variables
 dotenv.config();
 
 // Route imports
 const userRoutes = require("./routes/userRoutes");
-const keuanganRoutes = require("./routes/keuanganRoutes");
 const beritaRoutes = require("./routes/beritaRoutes");
 const laporanRoutes = require("./routes/laporanRoutes");
 const suratRoutes = require("./routes/suratRoutes");
