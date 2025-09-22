@@ -115,31 +115,15 @@ exports.deleteSurat = async (req, res) => {
 };
 
 exports.printSurat = async (req, res) => {
-    try {
-        const suratId = req.params.id;
+  try {
+    const suratId = req.params.id;
+    const pdfBuffer = await PdfService.generateSuratPdf(suratId);
 
-        const surat = await suratService.getSuratById(suratId);
-        
-        if (!surat) {
-             return res.status(404).json({
-                message: `Surat dengan ID ${suratId} tidak ditemukan!`,
-            });
-        }
-        
-        if (!PdfService) {
-            console.error("PdfService module is not available.");
-            return res.status(500).send("Gagal mencetak surat: PdfService tidak ditemukan.");
-        }
-
-        const pdfBuffer = await PdfService.generateSuratPdf(surat);
-        
-        res.set({
-            "Content-Type": "application/pdf",
-            "Content-Disposition": `inline; filename="surat-${suratId}.pdf"`,
-        });
-        res.send(pdfBuffer);
-    } catch (err) {
-        console.error("Error in printSurat controller:", err);
-        res.status(500).send(`Gagal mencetak surat: ${err.message || "Kesalahan internal server."}`);
-    }
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `inline; filename="surat-${suratId}.pdf"`);
+    res.send(pdfBuffer);
+  } catch (error) {
+    console.error("Error generating surat PDF:", error);
+    res.status(500).json({ message: "Gagal generate surat", error: error.message });
+  }
 };
