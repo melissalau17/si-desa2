@@ -82,16 +82,16 @@ exports.createLaporan = async (req, res) => {
 exports.updateLaporan = async (req, res) => {
     try {
         const { deskripsi, lokasi, keluhan, vote, status } = req.body;
-        const laporanId = req.params.id;
-
-        const oldLaporan = await laporanService.getLaporanById(laporanId);
+        const oldLaporan = await laporanService.getLaporanById(req.params.id);
         if (!oldLaporan) {
             return res.status(404).json({ message: "Laporan tidak ditemukan!" });
         }
 
-        let photoUrl = oldLaporan.photo_url;
+        let photoUrl = oldLaporan.photo_url; 
+
         if (req.file) {
-            photoUrl = await R2Service.uploadFile(req.file.buffer, req.file.mimetype);
+            const newPhoto = req.file;
+            photoUrl = await R2Service.uploadFile(newPhoto.buffer, newPhoto.mimetype);
         }
 
         const updatePayload = {
@@ -100,13 +100,13 @@ exports.updateLaporan = async (req, res) => {
             ...(keluhan !== undefined && { keluhan }),
             ...(vote !== undefined && { vote: parseInt(vote, 10) }),
             ...(status !== undefined && { status }),
-            photo_url: photoUrl,
+            ...(photoUrl !== undefined && { photo_url: photoUrl }), 
         };
 
-        const updatedLaporan = await laporanService.updateLaporan(laporanId, updatePayload);
+        const updatedLaporan = await laporanService.updateLaporan(req.params.id, updatePayload);
 
-        if (status && updatedLaporan.status !== oldLaporan.status) {
-            await sendLaporanStatusNotification(updatedLaporan);
+        if (updatedLaporan.status !== oldLaporan.status) {
+            req.io.emit("laporanStatusUpdated", updatedLaporan);
         }
 
         res.status(200).json({

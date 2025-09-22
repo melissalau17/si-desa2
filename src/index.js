@@ -86,18 +86,14 @@ app.get("/api", (req, res) => {
     res.send("Hello API");
 });
 
-// API routes
 app.use("/api", userRoutes);
-app.use("/api", keuanganRoutes);
 app.use("/api", beritaRoutes);
 app.use("/api", laporanRoutes);
 app.use("/api", suratRoutes);
 
-// Socket.IO events
 io.on("connection", (socket) => {
     console.log("🔌 New client connected:", socket.id);
 
-    // Initial message to the client
     socket.emit("notification", {
         title: "Welcome",
         body: "Real-time connection established.",
