@@ -23,12 +23,11 @@ exports.createSurat = async (data) => {
 };
 
 exports.updateSurat = async (id, data) => {
-    const existingSurat = await suratModel.findById(id);
-    if (!existingSurat) return null;
-    const updatedSurat = await suratModel.update(id, data);
-    return suratModel.findById(updatedSurat.surat_id, {
-        include: { user: true }
-    });
-}
+  const existingSurat = await suratModel.findById(id);
+  if (!existingSurat) return null;
+  const updatedSurat = await suratModel.update(id, data);
+  const suratId = updatedSurat.surat_id || id;
+  return await suratModel.findById(suratId, { include: { user: true } });
+};
 
 exports.deleteSurat = (id) => suratModel.remove(id);
