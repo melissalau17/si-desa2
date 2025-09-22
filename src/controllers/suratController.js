@@ -117,20 +117,15 @@ exports.deleteSurat = async (req, res) => {
 exports.printSurat = async (req, res) => {
   try {
     const suratId = req.params.id;
-    console.log("Mencetak surat dengan ID:", suratId);
-
+    console.log("📌 printSurat called, suratId =", suratId);
     const pdfBuffer = await PdfService.generateSuratPdf(suratId);
-
-    if (!pdfBuffer || !Buffer.isBuffer(pdfBuffer)) {
-      console.error("PdfService return invalid data:", pdfBuffer);
-      return res.status(500).json({ message: "PdfService tidak mengembalikan Buffer PDF" });
-    }
+    console.log("📄 Buffer size:", pdfBuffer?.length);
 
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", `inline; filename="surat-${suratId}.pdf"`);
-    res.send(pdfBuffer);
+    res.end(pdfBuffer);
   } catch (error) {
-    console.error("Error generating surat PDF:", error.message, error.stack);
+    console.error("Error generating surat PDF:", error);
     res.status(500).json({ message: "Gagal generate surat", error: error.message });
   }
 };
