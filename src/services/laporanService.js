@@ -56,16 +56,28 @@ exports.updateLaporan = async (id, data) => {
   const { photoUrl, ...updatePayload } = data;
 
   if (photoUrl) {
-    updatePayload.photo_url = photoUrl; 
+    updatePayload.photo_url = photoUrl;
   }
 
-  return await prisma.laporan.update({
+  let updated = await prisma.laporan.update({
     where: { laporan_id: parseInt(id) },
     data: updatePayload,
     include: {
-      user: { select: { nama: true, no_hp: true } }, 
+      user: { select: { nama: true, no_hp: true } },
     },
   });
+
+  if (updated.vote >= 50 && updated.status !== "siap dikerjakan") {
+    updated = await prisma.laporan.update({
+      where: { laporan_id: parseInt(id) },
+      data: { status: "siap dikerjakan" },
+      include: {
+        user: { select: { nama: true, no_hp: true } },
+      },
+    });
+  }
+
+  return updated;
 };
 
 exports.deleteLaporan = async (id) => {
