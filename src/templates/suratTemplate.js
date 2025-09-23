@@ -3,7 +3,7 @@ module.exports = (data) => {
     nama,
     nik,
     tempat_lahir,
-    // tanggal_lahir,
+    tanggal_lahir,
     alamat,
     jenis_surat,
     tujuan_surat,
