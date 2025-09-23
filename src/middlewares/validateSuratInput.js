@@ -11,17 +11,17 @@ const suratSchema = Joi.object({
     nik: Joi.string().required(),
     nama: Joi.string().required(),
     tempat_lahir: Joi.string().optional().allow(null, ""),
-    // tanggal_lahir: Joi.string()
-    //     .optional()
-    //     .allow(null, "")
-    //     .custom((value, helpers) => {
-    //         if (!value) return value;
-    //         const regex = /^\d{2}-\d{2}-\d{4}$/;
-    //         if (!regex.test(value)) {
-    //             return helpers.error("any.invalid");
-    //         }
-    //         return value;
-    //     }),
+    tanggal_lahir: Joi.string()
+        .optional()
+        .allow(null, "")
+        .custom((value, helpers) => {
+            if (!value) return value;
+            const regex = /^\d{2}-\d{2}-\d{4}$/;
+            if (!regex.test(value)) {
+                return helpers.error("any.invalid");
+            }
+            return value;
+        }),
     no_hp: Joi.string().optional().allow(null, ""),
     email: Joi.string().optional().allow(null, ""),
     jenis_kelamin: Joi.string().optional().allow(null, ""),
