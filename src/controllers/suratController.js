@@ -116,18 +116,23 @@ exports.deleteSurat = async (req, res) => {
 
 exports.printSurat = async (req, res) => {
   try {
-    const suratId = parseInt(req.params.id, 10);
-    if (isNaN(suratId)) {
-      return res.status(400).json({ message: "Invalid surat ID" });
-    }
+    const suratId = req.params.id;
+    console.log("Generating PDF for surat ID:", suratId);
 
     const pdfBuffer = await PdfService.generateSuratPdf(suratId);
 
     res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", `inline; filename="surat-${suratId}.pdf"`);
+    res.setHeader(
+      "Content-Disposition",
+      `inline; filename="surat-${suratId}.pdf"`
+    );
     res.send(pdfBuffer);
   } catch (error) {
     console.error("Error in printSurat controller:", error);
-    res.status(500).json({ message: "Gagal generate surat", error: error.message });
+    res.status(500).json({
+      message: "Gagal generate surat",
+      error: error.message,
+      stack: error.stack,
+    });
   }
 };
