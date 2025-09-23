@@ -62,6 +62,7 @@ model Surat {
   nama           String
   nik            String
   tempat_lahir   String?
+  tanggal_lahir  Date?
   jenis_kelamin  String?
   agama          String?
   alamat         String

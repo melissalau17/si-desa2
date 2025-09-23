@@ -13,6 +13,7 @@ exports.generateSuratPdf = async (suratId) => {
     nama: suratDataFromDB.nama || "Tidak Tersedia",
     nik: suratDataFromDB.nik || "Tidak Tersedia",
     tempat_lahir: suratDataFromDB.tempat_lahir || "Tidak Tersedia",
+    tanggal_lahir: suratDataFromDB.tanggal_lahir || "Tidak Tersedia",
     alamat: suratDataFromDB.alamat || "Tidak Tersedia",
     jenis_surat: suratDataFromDB.jenis_surat || "Tidak Tersedia",
     tujuan_surat: suratDataFromDB.tujuan_surat || "Tidak Tersedia",
