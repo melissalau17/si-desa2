@@ -20,6 +20,7 @@ router.patch(
     upload.single("photo"),
     laporanController.updateLaporan
 );
+router.patch('/reports/vote/:id', laporanController.voteLaporan);
 router.delete("/reports/:id", authMiddleware, laporanController.deleteLaporan);
 
 module.exports = router;

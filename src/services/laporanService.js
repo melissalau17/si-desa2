@@ -97,6 +97,33 @@ exports.updateLaporan = async (id, data) => {
   }
 };
 
+exports.voteLaporan = async (laporanId, userId) => {
+  try {
+    const laporan = await prisma.laporan.findUnique({
+      where: { laporan_id: parseInt(laporanId) },
+    });
+    if (!laporan) throw new Error("Laporan not found");
+
+    // Check if user already voted
+    if (laporan.voters.includes(userId)) {
+      throw new Error("User already voted");
+    }
+
+    const updated = await prisma.laporan.update({
+      where: { laporan_id: parseInt(laporanId) },
+      data: {
+        vote: laporan.vote + 1,
+        voters: { push: userId }, // add userId to voters array
+      },
+    });
+
+    return updated;
+  } catch (err) {
+    console.error("Error voting laporan:", err);
+    throw err;
+  }
+};
+
 exports.deleteLaporan = async (id) => {
   try {
     const laporan = await prisma.laporan.findUnique({

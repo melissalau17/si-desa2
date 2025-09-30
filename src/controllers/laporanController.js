@@ -120,6 +120,24 @@ exports.updateLaporan = async (req, res) => {
     }
 };
 
+exports.voteLaporan = async (req, res) => {
+  const { id } = req.params;
+  const { user_id } = req.body;
+
+  const laporan = await laporanService.getLaporanById(id);
+  if (!laporan) return res.status(404).json({ message: 'Laporan not found' });
+
+  if (laporan.voters?.includes(user_id)) {
+    return res.status(400).json({ message: 'User already voted' });
+  }
+
+  const updated = await laporanService.updateLaporan(id, {
+    vote: laporan.vote + 1,
+    voters: [...(laporan.voters || []), user_id],
+  });
+
+  res.status(200).json(updated);
+};
 
 exports.deleteLaporan = async (req, res) => {
     try {
