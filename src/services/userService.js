@@ -11,6 +11,18 @@ function normalizePhotoUrl(photoUrl) {
     return photoUrl.startsWith("http") ? photoUrl : `${PUBLIC_URL}/${photoUrl}`;
 }
 
+exports.countAll = () => prisma.user.count();
+
+exports.countNewThisMonth = () => {
+  const startOfMonth = new Date();
+  startOfMonth.setDate(1);
+  startOfMonth.setHours(0, 0, 0, 0);
+
+  return prisma.user.count({
+    where: { createdAt: { gte: startOfMonth } },
+  });
+};
+
 exports.getAllUsers = async () => {
     const users = await userModel.findAll();
     return users.map(u => ({ ...u, photo_url: normalizePhotoUrl(u.photo_url) }));

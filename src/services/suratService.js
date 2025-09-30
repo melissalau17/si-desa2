@@ -1,4 +1,3 @@
-const suratModel = require("../models/SuratModel");
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
@@ -21,39 +20,88 @@ function normalizeSuratPhotos(surat) {
   };
 }
 
+exports.countAll = () => prisma.surat.count();
+
+exports.countNew = () =>
+  prisma.surat.count({
+    where: {
+      createdAt: {
+        gte: new Date(new Date().setDate(new Date().getDate() - 7)), // last 7 days
+      },
+    },
+  });
+
+exports.getLatest = (limit = 5) =>
+  prisma.surat.findMany({
+    orderBy: { createdAt: 'desc' },
+    take: limit,
+  });
+
 exports.getAllSurat = async () => {
-  const surats = await suratModel.findAll({
-    include: { user: true },
+  const surats = await prisma.surat.findMany({
+    include: {
+      author: { select: { nama: true, no_hp: true, user_id: true } },
+    },
+    orderBy: { createdAt: "desc" },
   });
   return surats.map(s => normalizeSuratPhotos(s));
 };
 
 exports.getSuratById = async (id) => {
-  const surat = await suratModel.findById(id, {
-    include: { user: true },
+  const surat = await prisma.surat.findUnique({
+    where: { surat_id: parseInt(id) },
+    include: {
+      author: { select: { nama: true, no_hp: true, user_id: true } },
+    },
   });
   return normalizeSuratPhotos(surat);
 };
 
-exports.findByNIK = (nik) => suratModel.findByNIK(nik);
+exports.findByNIK = async (nik) => {
+  const surat = await prisma.surat.findFirst({
+    where: { nik },
+    include: {
+      author: { select: { nama: true, no_hp: true, user_id: true } },
+    },
+  });
+  return normalizeSuratPhotos(surat);
+};
 
 exports.createSurat = async (data) => {
-  const newSurat = await suratModel.create(data);
-  const created = await suratModel.findById(newSurat.surat_id, {
-    include: { user: true },
+  const { user_id, ...rest } = data;
+
+  const newSurat = await prisma.surat.create({
+    data: {
+      ...rest,
+      createdBy: user_id, 
+    },
+    include: {
+      author: { select: { nama: true, no_hp: true, user_id: true } },
+    },
   });
-  return normalizeSuratPhotos(created);
+
+  return normalizeSuratPhotos(newSurat);
 };
 
 exports.updateSurat = async (id, data) => {
-  const existingSurat = await suratModel.findById(id);
-  if (!existingSurat) return null;
+  const existing = await prisma.surat.findUnique({
+    where: { surat_id: parseInt(id) },
+  });
+  if (!existing) return null;
 
-  const updatedSurat = await suratModel.update(id, data);
-  const suratId = updatedSurat.surat_id || id;
+  const updatedSurat = await prisma.surat.update({
+    where: { surat_id: parseInt(id) },
+    data,
+    include: {
+      author: { select: { nama: true, no_hp: true, user_id: true } },
+    },
+  });
 
-  const finalSurat = await suratModel.findById(suratId, { include: { user: true } });
-  return normalizeSuratPhotos(finalSurat);
+  return normalizeSuratPhotos(updatedSurat);
 };
 
-exports.deleteSurat = (id) => suratModel.remove(id);
+exports.deleteSurat = async (id) => {
+  return await prisma.surat.delete({
+    where: { surat_id: parseInt(id) },
+  });
+};

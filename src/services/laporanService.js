@@ -10,12 +10,31 @@ function normalizePhotoUrl(photoUrl) {
   return photoUrl.startsWith("http") ? photoUrl : `${PUBLIC_URL}/${photoUrl}`;
 }
 
+exports.countAll = () => prisma.laporan.count();
+
+exports.countNew = () =>
+  prisma.laporan.count({
+    where: {
+      createdAt: {
+        gte: new Date(new Date().setDate(new Date().getDate() - 7)),
+      },
+    },
+  });
+
+exports.getLatest = (limit = 5) =>
+  prisma.laporan.findMany({
+    orderBy: { createdAt: 'desc' },
+    take: limit,
+  });
+
 exports.getAllLaporans = async () => {
   const laporans = await prisma.laporan.findMany({
     include: {
-      user: { select: { no_hp: true, nama: true } }
-    }
+      author: { select: { no_hp: true, nama: true, user_id: true } },
+    },
+    orderBy: { createdAt: "desc" },
   });
+
   return laporans.map(l => ({ ...l, photo_url: normalizePhotoUrl(l.photo_url) }));
 };
 
@@ -23,8 +42,8 @@ exports.getLaporanById = async (id) => {
   const laporan = await prisma.laporan.findUnique({
     where: { laporan_id: parseInt(id) },
     include: {
-      user: { select: { no_hp: true, nama: true } }
-    }
+      author: { select: { no_hp: true, nama: true, user_id: true } },
+    },
   });
   if (!laporan) return null;
   return { ...laporan, photo_url: normalizePhotoUrl(laporan.photo_url) };
@@ -42,11 +61,11 @@ exports.createLaporan = async (data) => {
       vote: vote || 0,
       status,
       photo_url,
-      user_id,
+      createdBy: user_id, 
     },
     include: {
-      user: { select: { nama: true, no_hp: true } }
-    }
+      author: { select: { nama: true, no_hp: true, user_id: true } },
+    },
   });
 
   return { ...newLaporan, photo_url: normalizePhotoUrl(newLaporan.photo_url) };
@@ -63,7 +82,7 @@ exports.updateLaporan = async (id, data) => {
     where: { laporan_id: parseInt(id) },
     data: updatePayload,
     include: {
-      user: { select: { nama: true, no_hp: true } },
+      author: { select: { nama: true, no_hp: true, user_id: true } },
     },
   });
 
@@ -72,25 +91,25 @@ exports.updateLaporan = async (id, data) => {
       where: { laporan_id: parseInt(id) },
       data: { status: "siap dikerjakan" },
       include: {
-        user: { select: { nama: true, no_hp: true } },
+        author: { select: { nama: true, no_hp: true, user_id: true } },
       },
     });
   }
 
-  return updated;
+  return { ...updated, photo_url: normalizePhotoUrl(updated.photo_url) };
 };
 
 exports.deleteLaporan = async (id) => {
   const laporan = await prisma.laporan.findUnique({
     where: { laporan_id: parseInt(id) },
-    select: { photo_url: true }
+    select: { photo_url: true },
   });
 
   if (laporan && laporan.photo_url) {
     const oldKey = laporan.photo_url.replace(`${PUBLIC_URL}/`, "");
     await r2Client.send(new DeleteObjectCommand({
       Bucket: process.env.R2_BUCKET_NAME,
-      Key: oldKey
+      Key: oldKey,
     }));
   }
 

@@ -9,8 +9,8 @@ datasource db {
 }
 
 model User {
-  user_id   Int     @id @default(autoincrement())
-  NIK       String  @unique(map: "User_NIK_key")
+  user_id   Int       @id @default(autoincrement())
+  NIK       String    @unique(map: "User_NIK_key")
   nama      String
   no_hp     String
   jenis_kel String
@@ -18,42 +18,45 @@ model User {
   agama     String
   username  String
   password  String
-  photo_url String? @db.VarChar(255)
-  role      String  @default("user")
-  email     String? @db.VarChar(255)
-
-  // back relation
-  laporans Laporan[]
+  photo_url String?   @db.VarChar(255)
+  role      String    @default("user")
+  email     String?   @db.VarChar(255)
+  laporan   Laporan[]
 
   @@map("user")
 }
 
 model Berita {
-  berita_id Int     @id @default(autoincrement())
+  berita_id Int       @id @default(autoincrement())
   judul     String
   kategori  String
-  photo_url String? @db.VarChar(255)
+  photo_url String?   @db.VarChar(255)
   tanggal   String?
   kontent   String
   status    String
+  createdAt DateTime? @default(now()) @db.DateTime(0)
+  updatedAt DateTime? @db.DateTime(0)
+  createdBy Int
 
   @@map("berita")
 }
 
 model Laporan {
-  laporan_id Int     @id @default(autoincrement())
+  laporan_id Int       @id @default(autoincrement())
   keluhan    String
   deskripsi  String
-  photo_url  String? @db.VarChar(255)
+  photo_url  String?   @db.VarChar(255)
   tanggal    String?
   lokasi     String
-  vote       Int?    @default(0)
+  vote       Int?      @default(0)
   status     String
+  user_id    Int?
+  createdAt  DateTime? @default(now()) @db.DateTime(0)
+  updatedAt  DateTime? @db.DateTime(0)
+  createdBy  Int
+  user       User?     @relation(fields: [user_id], references: [user_id])
 
-  // relation
-  user_id Int?
-  user    User?   @relation(fields: [user_id], references: [user_id])
-
+  @@index([user_id], map: "laporan_user_id_fkey")
   @@map("laporan")
 }
 
@@ -62,21 +65,34 @@ model Surat {
   nama           String
   nik            String
   tempat_lahir   String?
-  tanggal_lahir  DateTime?
+  tanggal_lahir  DateTime? @db.Date
   jenis_kelamin  String?
   agama          String?
   alamat         String
   jenis_surat    String
   tujuan_surat   String
-  photo_ktp      String?  @db.VarChar(255)
-  photo_kk       String?  @db.VarChar(255)
-  foto_usaha     String?  @db.VarChar(255)
+  photo_ktp      String?   @db.VarChar(255)
+  photo_kk       String?   @db.VarChar(255)
+  foto_usaha     String?   @db.VarChar(255)
   waktu_kematian String?
   gaji_ortu      String?
   tanggal        DateTime  @default(now())
   status         String?   @db.VarChar(50)
   no_hp          String?
   email          String?   @default("")
+  createdAt      DateTime? @default(now()) @db.DateTime(0)
+  updatedAt      DateTime? @db.DateTime(0)
+  createdBy      Int
 
   @@map("surat")
+}
+
+model keuangan {
+  keuangan_id    Int      @id @default(autoincrement())
+  jenisTransaksi String
+  keterangan     String
+  kategori       String
+  tanggal        DateTime
+  jumlah         Decimal  @db.Decimal(15, 2)
+  catatan        String
 }
