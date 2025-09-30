@@ -47,6 +47,11 @@ exports.createBerita = async (req, res) => {
             return res.status(400).json({ message: "Semua field harus diisi!" });
         }
 
+        const user_id = req.user?.user_id; 
+        if (!user_id) {
+            return res.status(401).json({ message: "User not authenticated" });
+        }
+
         const tanggal = moment().tz("Asia/Jakarta").toISOString();
         const photoFile = req.file;
 
@@ -63,6 +68,7 @@ exports.createBerita = async (req, res) => {
             kontent,
             status,
             photo_url: photoUrl,
+            createdBy: parseInt(user_id),
         });
 
         await sendBeritaNotification(newBerita);

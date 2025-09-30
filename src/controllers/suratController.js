@@ -45,6 +45,10 @@ exports.createSurat = async (req, res) => {
     try {
         const { nik, tempat_lahir, tanggal_lahir, jenis_kelamin, agama, alamat, no_hp, email, jenis_surat, tujuan_surat, waktu_kematian } = req.body;
         const userId = req.user.user_id;
+        
+        if (!user_id) {
+            return res.status(401).json({ message: "User not authenticated" });
+        }
 
         const photo_ktp = req.files?.photo_ktp?.[0];
         const photo_kk = req.files?.photo_kk?.[0];
@@ -61,6 +65,7 @@ exports.createSurat = async (req, res) => {
             photo_ktp_url, photo_kk_url,
             tanggal: moment().tz("Asia/Jakarta").toDate(),
             user_id: userId,
+            createdBy: parseInt(user_id),
         });
         
         await sendSuratNotification(newSurat);
