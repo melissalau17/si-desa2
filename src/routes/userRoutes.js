@@ -8,16 +8,14 @@ const authMiddleware = require("../middlewares/authMiddleware");
 
 const upload = multer({ storage: multer.memoryStorage() });
 
-// Public Routes (No Token Required)
 router.post(
   "/users",
-  upload.single("photo"),
+  userController.uploadPhoto,
   validateUserInput,
   userController.createUser
 );
 router.post("/login", userController.loginUser);
 
-// Protected Routes (Token Required)
 router.get("/users", authMiddleware, userController.getAllUsers);
 router.get("/users/:id", authMiddleware, userController.getUserById);
 router.patch(

@@ -1,12 +1,18 @@
 const userService = require("../services/userService");
 const { handleError } = require("../utils/errorHandler");
 const jwt = require("jsonwebtoken");
+const multer = require("multer");
 const R2Service = require("../services/r2Service"); 
 const NotificationService = require("../services/notificationService"); 
 const { hashPassword } = require("../utils/hash");
 const emitDashboardUpdate = require("../utils/emitDashboardUpdate");
 
 const JWT_SECRET = process.env.JWT_SECRET || "rahasia_super_rahasia";
+
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
+
+exports.uploadPhoto = upload.single("photo");
 
 exports.getAllUsers = async (req, res) => {
     try {
@@ -44,51 +50,72 @@ exports.getUserById = async (req, res) => {
 };
 
 exports.createUser = async (req, res) => {
-    try {
-        const { nama, username, email, password, NIK, agama, alamat, jenis_kel, no_hp, role } = req.body;
-        const photo_url = req.file;
-        const socket = req.app.get('socketio');
+  try {
+    const {
+      nama,
+      username,
+      email,
+      password,
+      NIK,
+      agama,
+      alamat,
+      jenis_kel,
+      no_hp,
+      role,
+    } = req.body;
 
-        if (!nama || !username || !password || !NIK || !agama || !alamat || !jenis_kel || !no_hp || !role) {
-            return res.status(400).json({ message: "Semua field harus diisi!" });
-        }
-        if (!NIK.startsWith("120724")) {
-            return res.status(403).json({ message: "Anda bukan warga desa ini!" });
-        }
-        if (typeof password !== "string" || password.length < 6) {
-            return res.status(400).json({ message: "Password harus minimal 6 karakter!" });
-        }
+    const photoFile = req.file; 
+    const io = req.io;
 
-        const existingUser = await userService.findByNIK(NIK);
-        if (existingUser) {
-            return res.status(409).json({ message: "NIK sudah digunakan!" });
-        }
-
-        console.log("Received photo object:", req.file);
-
-        let photoUrl = null;
-        if (req.file) {
-            console.log("Attempting to upload file to R2...");
-            photoUrl = await R2Service.uploadFile(req.file.buffer, req.file.mimetype);
-            console.log("File uploaded successfully. URL:", photoUrl);
-        }
-
-        const newUser = await userService.createUser({
-            nama, username, email, password, NIK, agama, alamat, jenis_kel, no_hp, role,
-            photo_url: photoUrl,
-        });
-
-        await NotificationService.sendUserRegistrationNotification(newUser, socket);
-        await emitDashboardUpdate(req.io);
-
-        return res.status(201).json({
-            message: "User berhasil dibuat!",
-            data: newUser,
-        });
-    } catch (error) {
-        console.error("Internal Server Error in createUser:", error);
-        handleError(res, error);
+    if (!nama || !username || !password || !NIK || !agama || !alamat || !jenis_kel || !no_hp || !role) {
+      return res.status(400).json({ message: "Semua field harus diisi!" });
     }
+
+    if (!NIK.trim().startsWith("120724")) {
+      return res.status(403).json({ message: "Anda bukan warga desa ini!" });
+    }
+
+    if (typeof password !== "string" || password.length < 6) {
+      return res.status(400).json({ message: "Password harus minimal 6 karakter!" });
+    }
+
+    const existingUser = await userService.findByNIK(NIK);
+    if (existingUser) {
+      return res.status(409).json({ message: "NIK sudah digunakan!" });
+    }
+
+    let photoUrl = null;
+    if (photoFile) {
+      photoUrl = await R2Service.uploadFile(photoFile.buffer, photoFile.mimetype);
+    }
+
+    const newUser = await userService.createUser({
+      nama,
+      username,
+      email,
+      password,
+      NIK,
+      agama,
+      alamat,
+      jenis_kel,
+      no_hp,
+      role,
+      photo_url: photoUrl,
+    });
+
+    if (io) {
+      NotificationService.sendUserRegistrationNotification(newUser, io);
+      io.emit("dashboard_update", { message: "New user registered" });
+    }
+
+    return res.status(201).json({
+      message: "User berhasil dibuat!",
+      data: newUser,
+    });
+  } catch (error) {
+    console.error("Error in createUser:", error);
+    res.status(500).json({ message: error.message || "Internal Server Error" });
+  }
 };
 
 exports.updateUser = async (req, res) => {
