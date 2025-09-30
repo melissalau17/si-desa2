@@ -188,9 +188,9 @@ exports.loginUser = async (req, res) => {
         const user = await userService.loginUser(username, password);
 
         const token = jwt.sign(
-            { user_id: user.user_id },
+            { user_id: user.user_id, username: user.username },
             JWT_SECRET,
-            { expiresIn: "1d" }
+            { expiresIn: '1h' }
         );
 
         return res.status(200).json({

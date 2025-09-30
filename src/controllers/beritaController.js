@@ -68,7 +68,7 @@ exports.createBerita = async (req, res) => {
             kontent,
             status,
             photo_url: photoUrl,
-            createdBy: parseInt(user_id),
+            createdBy: Number(user_id),
         });
 
         await sendBeritaNotification(newBerita);
