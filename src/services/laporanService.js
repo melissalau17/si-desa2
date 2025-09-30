@@ -12,14 +12,12 @@ function normalizePhotoUrl(photoUrl) {
 
 exports.countAll = () => prisma.laporan.count();
 
-exports.countNew = () =>
-  prisma.laporan.count({
-    where: {
-      createdAt: {
-        gte: new Date(new Date().setDate(new Date().getDate() - 7)),
-      },
-    },
+exports.countNew = () => {
+  const last7Days = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  return prisma.laporan.count({
+    where: { createdAt: { gte: last7Days } },
   });
+};
 
 exports.getLatest = (limit = 5) =>
   prisma.laporan.findMany({
@@ -28,92 +26,97 @@ exports.getLatest = (limit = 5) =>
   });
 
 exports.getAllLaporans = async () => {
-  const laporans = await prisma.laporan.findMany({
-    include: {
-      author: { select: { no_hp: true, nama: true, user_id: true } },
-    },
-    orderBy: { createdAt: "desc" },
-  });
-
-  return laporans.map(l => ({ ...l, photo_url: normalizePhotoUrl(l.photo_url) }));
+  try {
+    const laporans = await prisma.laporan.findMany({
+      orderBy: { createdAt: "desc" },
+    });
+    return laporans.map(l => ({ ...l, photo_url: normalizePhotoUrl(l.photo_url) }));
+  } catch (err) {
+    console.error("Error fetching all laporans:", err);
+    return [];
+  }
 };
 
 exports.getLaporanById = async (id) => {
-  const laporan = await prisma.laporan.findUnique({
-    where: { laporan_id: parseInt(id) },
-    include: {
-      author: { select: { no_hp: true, nama: true, user_id: true } },
-    },
-  });
-  if (!laporan) return null;
-  return { ...laporan, photo_url: normalizePhotoUrl(laporan.photo_url) };
+  try {
+    const laporan = await prisma.laporan.findUnique({
+      where: { laporan_id: parseInt(id) },
+    });
+    if (!laporan) return null;
+    return { ...laporan, photo_url: normalizePhotoUrl(laporan.photo_url) };
+  } catch (err) {
+    console.error("Error fetching laporan by ID:", err);
+    return null;
+  }
 };
 
 exports.createLaporan = async (data) => {
-  const { keluhan, photo_url, tanggal, deskripsi, lokasi, vote, status, user_id } = data;
-
-  const newLaporan = await prisma.laporan.create({
-    data: {
-      keluhan,
-      tanggal,
-      deskripsi,
-      lokasi,
-      vote: vote || 0,
-      status,
-      photo_url,
-      createdBy: user_id, 
-    },
-    include: {
-      author: { select: { nama: true, no_hp: true, user_id: true } },
-    },
-  });
-
-  return { ...newLaporan, photo_url: normalizePhotoUrl(newLaporan.photo_url) };
+  try {
+    const { keluhan, photo_url, tanggal, deskripsi, lokasi, vote, status, user_id } = data;
+    const newLaporan = await prisma.laporan.create({
+      data: {
+        keluhan,
+        tanggal,
+        deskripsi,
+        lokasi,
+        vote: vote || 0,
+        status,
+        photo_url,
+        createdBy: user_id,
+      },
+    });
+    return { ...newLaporan, photo_url: normalizePhotoUrl(newLaporan.photo_url) };
+  } catch (err) {
+    console.error("Error creating laporan:", err);
+    throw err;
+  }
 };
 
 exports.updateLaporan = async (id, data) => {
-  const { photoUrl, ...updatePayload } = data;
+  try {
+    const { photoUrl, ...updatePayload } = data;
 
-  if (photoUrl) {
-    updatePayload.photo_url = photoUrl;
-  }
+    if (photoUrl) updatePayload.photo_url = photoUrl;
 
-  let updated = await prisma.laporan.update({
-    where: { laporan_id: parseInt(id) },
-    data: updatePayload,
-    include: {
-      author: { select: { nama: true, no_hp: true, user_id: true } },
-    },
-  });
-
-  if (updated.vote >= 50 && updated.status !== "siap dikerjakan") {
-    updated = await prisma.laporan.update({
+    let updated = await prisma.laporan.update({
       where: { laporan_id: parseInt(id) },
-      data: { status: "siap dikerjakan" },
-      include: {
-        author: { select: { nama: true, no_hp: true, user_id: true } },
-      },
+      data: updatePayload,
     });
-  }
 
-  return { ...updated, photo_url: normalizePhotoUrl(updated.photo_url) };
+    if (updated.vote >= 50 && updated.status !== "siap dikerjakan") {
+      updated = await prisma.laporan.update({
+        where: { laporan_id: parseInt(id) },
+        data: { status: "siap dikerjakan" },
+      });
+    }
+
+    return { ...updated, photo_url: normalizePhotoUrl(updated.photo_url) };
+  } catch (err) {
+    console.error("Error updating laporan:", err);
+    return null;
+  }
 };
 
 exports.deleteLaporan = async (id) => {
-  const laporan = await prisma.laporan.findUnique({
-    where: { laporan_id: parseInt(id) },
-    select: { photo_url: true },
-  });
+  try {
+    const laporan = await prisma.laporan.findUnique({
+      where: { laporan_id: parseInt(id) },
+      select: { photo_url: true },
+    });
 
-  if (laporan && laporan.photo_url) {
-    const oldKey = laporan.photo_url.replace(`${PUBLIC_URL}/`, "");
-    await r2Client.send(new DeleteObjectCommand({
-      Bucket: process.env.R2_BUCKET_NAME,
-      Key: oldKey,
-    }));
+    if (laporan && laporan.photo_url) {
+      const oldKey = laporan.photo_url.replace(`${PUBLIC_URL}/`, "");
+      await r2Client.send(new DeleteObjectCommand({
+        Bucket: process.env.R2_BUCKET_NAME,
+        Key: oldKey,
+      }));
+    }
+
+    return await prisma.laporan.delete({
+      where: { laporan_id: parseInt(id) },
+    });
+  } catch (err) {
+    console.error("Error deleting laporan:", err);
+    return null;
   }
-
-  return await prisma.laporan.delete({
-    where: { laporan_id: parseInt(id) },
-  });
 };

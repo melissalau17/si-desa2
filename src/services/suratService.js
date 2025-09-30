@@ -7,29 +7,31 @@ function normalizeSuratPhotos(surat) {
   if (!surat) return null;
   return {
     ...surat,
-    photo_ktp_url: surat.photo_ktp_url
-      ? surat.photo_ktp_url.startsWith("http")
-        ? surat.photo_ktp_url
-        : `${PUBLIC_URL}/${surat.photo_ktp_url}`
+    photo_ktp_url: surat.photo_ktp
+      ? surat.photo_ktp.startsWith('http')
+        ? surat.photo_ktp
+        : `${PUBLIC_URL}/${surat.photo_ktp}`
       : null,
-    photo_kk_url: surat.photo_kk_url
-      ? surat.photo_kk_url.startsWith("http")
-        ? surat.photo_kk_url
-        : `${PUBLIC_URL}/${surat.photo_kk_url}`
+    photo_kk_url: surat.photo_kk
+      ? surat.photo_kk.startsWith('http')
+        ? surat.photo_kk
+        : `${PUBLIC_URL}/${surat.photo_kk}`
       : null,
   };
 }
 
 exports.countAll = () => prisma.surat.count();
 
-exports.countNew = () =>
-  prisma.surat.count({
+exports.countNew = () => {
+  const last7Days = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  return prisma.surat.count({
     where: {
       createdAt: {
-        gte: new Date(new Date().setDate(new Date().getDate() - 7)), // last 7 days
+        gte: last7Days,
       },
     },
   });
+};
 
 exports.getLatest = (limit = 5) =>
   prisma.surat.findMany({
@@ -39,47 +41,34 @@ exports.getLatest = (limit = 5) =>
 
 exports.getAllSurat = async () => {
   const surats = await prisma.surat.findMany({
-    include: {
-      author: { select: { nama: true, no_hp: true, user_id: true } },
-    },
-    orderBy: { createdAt: "desc" },
+    orderBy: { createdAt: 'desc' },
   });
-  return surats.map(s => normalizeSuratPhotos(s));
+  return surats.map(normalizeSuratPhotos);
 };
 
 exports.getSuratById = async (id) => {
   const surat = await prisma.surat.findUnique({
     where: { surat_id: parseInt(id) },
-    include: {
-      author: { select: { nama: true, no_hp: true, user_id: true } },
-    },
   });
   return normalizeSuratPhotos(surat);
 };
 
 exports.findByNIK = async (nik) => {
+  if (!nik) return null; 
   const surat = await prisma.surat.findFirst({
     where: { nik },
-    include: {
-      author: { select: { nama: true, no_hp: true, user_id: true } },
-    },
   });
   return normalizeSuratPhotos(surat);
 };
 
 exports.createSurat = async (data) => {
   const { user_id, ...rest } = data;
-
   const newSurat = await prisma.surat.create({
     data: {
       ...rest,
-      createdBy: user_id, 
-    },
-    include: {
-      author: { select: { nama: true, no_hp: true, user_id: true } },
+      createdBy: user_id,
     },
   });
-
   return normalizeSuratPhotos(newSurat);
 };
 
@@ -92,16 +81,12 @@ exports.updateSurat = async (id, data) => {
   const updatedSurat = await prisma.surat.update({
     where: { surat_id: parseInt(id) },
     data,
-    include: {
-      author: { select: { nama: true, no_hp: true, user_id: true } },
-    },
   });
 
   return normalizeSuratPhotos(updatedSurat);
 };
 
-exports.deleteSurat = async (id) => {
-  return await prisma.surat.delete({
+exports.deleteSurat = async (id) =>
+  prisma.surat.delete({
     where: { surat_id: parseInt(id) },
   });
-};
