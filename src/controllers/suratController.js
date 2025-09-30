@@ -43,10 +43,22 @@ exports.getSuratById = async (req, res) => {
 
 exports.createSurat = async (req, res) => {
     try {
-        const { nik, tempat_lahir, tanggal_lahir, jenis_kelamin, agama, alamat, no_hp, email, jenis_surat, tujuan_surat, waktu_kematian } = req.body;
-        const userId = req.user.user_id;
-        
-        if (!user_id) {
+        const {
+            nik,
+            tempat_lahir,
+            tanggal_lahir,
+            jenis_kelamin,
+            agama,
+            alamat,
+            no_hp,
+            email,
+            jenis_surat,
+            tujuan_surat,
+            waktu_kematian,
+        } = req.body;
+
+        const userId = req.user?.user_id; // always use consistent variable
+        if (!userId) {
             return res.status(401).json({ message: "User not authenticated" });
         }
 
@@ -61,15 +73,26 @@ exports.createSurat = async (req, res) => {
         const photo_kk_url = await R2Service.uploadFile(photo_kk.buffer, photo_kk.mimetype);
 
         const newSurat = await suratService.createSurat({
-            nik, tempat_lahir, tanggal_lahir, jenis_kelamin, agama, alamat, no_hp, email, jenis_surat, tujuan_surat, waktu_kematian,
-            photo_ktp_url, photo_kk_url,
+            nik,
+            tempat_lahir,
+            tanggal_lahir,
+            jenis_kelamin,
+            agama,
+            alamat,
+            no_hp,
+            email,
+            jenis_surat,
+            tujuan_surat,
+            waktu_kematian,
+            photo_ktp_url,
+            photo_kk_url,
             tanggal: moment().tz("Asia/Jakarta").toDate(),
-            user_id: userId,
-            createdBy: parseInt(user_id),
+            user_id: userId,        // used by service to set createdBy
         });
-        
+
         await sendSuratNotification(newSurat);
         await emitDashboardUpdate(req.io);
+
         res.status(201).json({
             message: "Surat berhasil dibuat!",
             data: newSurat,

@@ -43,12 +43,13 @@ exports.getBeritaById = async (req, res) => {
 exports.createBerita = async (req, res) => {
     try {
         const { judul, kategori, kontent, status } = req.body;
+
         if (!judul || !kategori || !kontent || !status) {
             return res.status(400).json({ message: "Semua field harus diisi!" });
         }
 
-        const user_id = req.user?.user_id; 
-        if (!user_id) {
+        const userId = req.user?.user_id;
+        if (!userId) {
             return res.status(401).json({ message: "User not authenticated" });
         }
 
@@ -68,11 +69,10 @@ exports.createBerita = async (req, res) => {
             kontent,
             status,
             photo_url: photoUrl,
-            createdBy: Number(user_id),
+            createdBy: Number(userId), // Prisma expects this column
         });
 
         await sendBeritaNotification(newBerita);
-
         await emitDashboardUpdate(req.io);
 
         res.status(201).json({
