@@ -69,7 +69,7 @@ exports.createBerita = async (req, res) => {
             kontent,
             status,
             photo_url: photoUrl,
-            createdBy: Number(userId), // Prisma expects this column
+            createdBy: Number(userId),
         });
 
         await sendBeritaNotification(newBerita);

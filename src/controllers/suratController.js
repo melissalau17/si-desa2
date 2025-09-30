@@ -57,7 +57,7 @@ exports.createSurat = async (req, res) => {
             waktu_kematian,
         } = req.body;
 
-        const userId = req.user?.user_id; // always use consistent variable
+        const userId = req.user?.user_id;
         if (!userId) {
             return res.status(401).json({ message: "User not authenticated" });
         }

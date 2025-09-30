@@ -61,7 +61,6 @@ module.exports = (data = {}) => {
     }
   };
 
-  // build dependents table rows
   const depRows = (dependents && dependents.length > 0)
     ? dependents.map((row, idx) => `
       <tr>
