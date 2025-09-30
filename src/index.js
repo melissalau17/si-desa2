@@ -48,24 +48,21 @@ app.use(
 );
 
 const io = new Server(server, {
-    cors: {
-        origin: (origin, callback) => {
-            if (
-                !origin ||
-                allowedOrigins.some(o => origin.startsWith(o)) ||
-                localhostRegex.test(origin) ||
-                lanIpRegex.test(origin) ||
-                zeroHostRegex.test(origin)
-            ) {
-                callback(null, true);
-            } else {
-                callback(new Error("Not allowed by CORS for Socket.IO"));
-            }
-        },
-        methods: ["GET", "POST"],
-        credentials: true,
-    },
+  cors: {
+    origin: [
+      "https://admin-sidesa.vercel.app",
+      "http://localhost:8081",
+      "http://localhost:19006",
+      "https://si-desa2.onrender.com", 
+      "exp://",
+      "exp+sistem-desa-mob://",
+      "sistem-desa-mob://"
+    ],
+    methods: ["GET", "POST"],
+    credentials: true,
+  },
 });
+
 
 app.use((req, res, next) => {
     req.io = io;
