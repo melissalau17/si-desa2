@@ -96,10 +96,6 @@ router.post('/surat', uploadFields, async (req, res) => {
             return res.status(400).json({ message: error.details[0].message });
         }
 
-        // At this point, all data is valid
-        // Save `suratData` to your database
-        // await db.saveSurat(suratData);
-
         res.status(201).json({ message: 'Surat data created successfully', data: suratData });
 
     } catch (err) {

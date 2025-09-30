@@ -33,7 +33,6 @@ exports.getUserById = async (req, res) => {
                 message: `User dengan ID ${req.params.id} tidak ditemukan!`,
             });
         }
-        // The photo field should now be a URL string
         res.status(200).json({
             message: `User dengan ID ${req.params.id} berhasil dimuat!`,
             data: user,
@@ -96,7 +95,6 @@ exports.updateUser = async (req, res) => {
         const photo_url = req.file;
         const userId = req.params.id;
 
-        // Fetch the existing user to get their current photo_url
         const existingUser = await userService.getUserById(userId);
         if (!existingUser) {
             return res.status(404).json({ message: "User tidak ditemukan!" });

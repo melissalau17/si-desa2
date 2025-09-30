@@ -1,16 +1,18 @@
 const { S3Client, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
 
+const ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
+const BUCKET_NAME = process.env.R2_BUCKET_NAME;
+
 const r2Client = new S3Client({
   region: 'auto',
-  endpoint: process.env.R2_ENDPOINT, 
+  endpoint: `https://${ACCOUNT_ID}.r2.cloudflarestorage.com`,
   credentials: {
     accessKeyId: process.env.R2_ACCESS_KEY_ID,
     secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
   },
 });
 
-const BUCKET_NAME = process.env.R2_BUCKET_NAME; 
-const PUBLIC_URL = process.env.R2_PUBLIC_URL; 
+const PUBLIC_URL = `https://${ACCOUNT_ID}.r2.cloudflarestorage.com/${BUCKET_NAME}`;
 
 exports.uploadFile = async (fileBuffer, mimeType) => {
   const fileName = `uploads/${Date.now()}-${Math.random()
