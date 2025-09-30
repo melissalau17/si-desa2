@@ -42,67 +42,78 @@ exports.getSuratById = async (req, res) => {
 };
 
 exports.createSurat = async (req, res) => {
-    try {
-        const {
-            nama,
-            nik,
-            tempat_lahir,
-            tanggal_lahir,
-            jenis_kelamin,
-            agama,
-            alamat,
-            no_hp,
-            email,
-            jenis_surat,
-            tujuan_surat,
-            waktu_kematian,
-        } = req.body;
+  try {
+    const {
+      nama,
+      nik,
+      tempat_lahir,
+      tanggal_lahir,
+      jenis_kelamin,
+      agama,
+      alamat,
+      no_hp,
+      email,
+      jenis_surat,
+      tujuan_surat,
+      waktu_kematian,
+      gaji_ortu,
+      foto_usaha,
+    } = req.body;
 
-        const userId = req.user?.user_id;
-        if (!userId) {
-            return res.status(401).json({ message: "User not authenticated" });
-        }
-
-        const photo_ktp = req.files?.photo_ktp?.[0];
-        const photo_kk = req.files?.photo_kk?.[0];
-
-        if (!photo_ktp || !photo_kk) {
-            return res.status(400).json({ message: "KTP dan KK wajib diunggah!" });
-        }
-
-        const photo_ktp_url = await R2Service.uploadFile(photo_ktp.buffer, photo_ktp.mimetype);
-        const photo_kk_url = await R2Service.uploadFile(photo_kk.buffer, photo_kk.mimetype);
-
-        const newSurat = await suratService.createSurat({
-            nama,
-            nik,
-            tempat_lahir,
-            tanggal_lahir,
-            jenis_kelamin,
-            agama,
-            alamat,
-            no_hp,
-            email,
-            jenis_surat,
-            tujuan_surat,
-            waktu_kematian,
-            photo_ktp_url,
-            photo_kk_url,
-            tanggal: moment().tz("Asia/Jakarta").toDate(),
-            createdBy: userId,       
-        });
-
-        await sendSuratNotification(newSurat);
-        await emitDashboardUpdate(req.io);
-
-        res.status(201).json({
-            message: "Surat berhasil dibuat!",
-            data: newSurat,
-        });
-    } catch (error) {
-        handleError(res, error);
+    if (!nama || !nik || !tempat_lahir || !tanggal_lahir || !jenis_kelamin || !agama || !alamat || !jenis_surat || !tujuan_surat) {
+      return res.status(400).json({ message: "Semua field wajib diisi!" });
     }
+
+    const userId = req.user?.user_id;
+    if (!userId) {
+      return res.status(401).json({ message: "User not authenticated" });
+    }
+
+    const photo_ktp = req.files?.photo_ktp?.[0];
+    const photo_kk = req.files?.photo_kk?.[0];
+
+    if (!photo_ktp || !photo_kk) {
+      return res.status(400).json({ message: "KTP dan KK wajib diunggah!" });
+    }
+
+    const photo_ktp_url = await R2Service.uploadFile(photo_ktp.buffer, photo_ktp.mimetype);
+    const photo_kk_url = await R2Service.uploadFile(photo_kk.buffer, photo_kk.mimetype);
+
+    const newSurat = await suratService.createSurat({
+      nama,
+      nik,
+      tempat_lahir,
+      tanggal_lahir: new Date(tanggal_lahir),
+      jenis_kelamin,
+      agama,
+      alamat,
+      no_hp: no_hp || null,
+      email: email || null,
+      jenis_surat,
+      tujuan_surat,
+      waktu_kematian: waktu_kematian ? new Date(waktu_kematian) : null,
+      gaji_ortu: gaji_ortu || null,
+      foto_usaha: foto_usaha || null,
+      photo_ktp_url,
+      photo_kk_url,
+      tanggal: moment().tz("Asia/Jakarta").toDate(),
+      createdBy: userId,
+    });
+
+    await sendSuratNotification(newSurat);
+    if (req.io) {
+            await emitDashboardUpdate(req.io);
+    }
+
+    res.status(201).json({
+      message: "Surat berhasil dibuat!",
+      data: newSurat,
+    });
+  } catch (error) {
+    handleError(res, error);
+  }
 };
+
 
 exports.updateSurat = async (req, res) => {
   try {
@@ -125,7 +136,9 @@ exports.updateSurat = async (req, res) => {
     if (status && oldSurat.status !== updatedSurat.status) {
       await sendSuratStatusNotification(updatedSurat);
     }
-    await emitDashboardUpdate(req.io);
+    if (req.io) {
+        await emitDashboardUpdate(req.io);
+    }
     res.status(200).json({
       message: "Surat berhasil diperbarui!",
       data: updatedSurat,
@@ -139,7 +152,9 @@ exports.deleteSurat = async (req, res) => {
     try {
         const deleted = await suratService.deleteSurat(req.params.id);
         if (!deleted) return res.status(404).json({ message: "Surat tidak ditemukan!" });
-        await emitDashboardUpdate(req.io);
+        if (req.io) {
+            await emitDashboardUpdate(req.io);
+        }
         res.status(200).json({ message: "Surat berhasil dihapus!" });
     } catch (error) {
         handleError(res, error);
