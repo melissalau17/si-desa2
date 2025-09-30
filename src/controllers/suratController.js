@@ -60,7 +60,7 @@ exports.createSurat = async (req, res) => {
       foto_usaha,
     } = req.body;
 
-    if (!nama || !nik || !tempat_lahir || !tanggal_lahir || !jenis_kelamin || !agama || !alamat || !jenis_surat || !tujuan_surat) {
+    if (!nama || !nik || !alamat || !jenis_surat || !tujuan_surat) {
       return res.status(400).json({ message: "Semua field wajib diisi!" });
     }
 
