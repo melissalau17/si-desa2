@@ -44,6 +44,7 @@ exports.getSuratById = async (req, res) => {
 exports.createSurat = async (req, res) => {
     try {
         const {
+            nama,
             nik,
             tempat_lahir,
             tanggal_lahir,
@@ -73,6 +74,7 @@ exports.createSurat = async (req, res) => {
         const photo_kk_url = await R2Service.uploadFile(photo_kk.buffer, photo_kk.mimetype);
 
         const newSurat = await suratService.createSurat({
+            nama,
             nik,
             tempat_lahir,
             tanggal_lahir,
@@ -87,7 +89,7 @@ exports.createSurat = async (req, res) => {
             photo_ktp_url,
             photo_kk_url,
             tanggal: moment().tz("Asia/Jakarta").toDate(),
-            user_id: userId,        // used by service to set createdBy
+            user_id: userId,       
         });
 
         await sendSuratNotification(newSurat);
