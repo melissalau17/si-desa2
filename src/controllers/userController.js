@@ -2,8 +2,9 @@ const userService = require("../services/userService");
 const { handleError } = require("../utils/errorHandler");
 const jwt = require("jsonwebtoken");
 const R2Service = require("../services/r2Service"); 
-const NotificationService = require("../services/notificationService"); // Your Notification service
+const NotificationService = require("../services/notificationService"); 
 const { hashPassword } = require("../utils/hash");
+const emitDashboardUpdate = require("../utils/emitDashboardUpdate");
 
 const JWT_SECRET = process.env.JWT_SECRET || "rahasia_super_rahasia";
 
@@ -78,6 +79,7 @@ exports.createUser = async (req, res) => {
         });
 
         await NotificationService.sendUserRegistrationNotification(newUser, socket);
+        await emitDashboardUpdate(req.io);
 
         return res.status(201).json({
             message: "User berhasil dibuat!",
@@ -129,7 +131,7 @@ exports.updateUser = async (req, res) => {
         if (!updatedUser) {
             return res.status(404).json({ message: "User tidak ditemukan!" });
         }
-
+        await emitDashboardUpdate(req.io);
         res.status(200).json({
             message: "User berhasil diperbarui!",
             data: updatedUser,
@@ -146,6 +148,7 @@ exports.deleteUser = async (req, res) => {
         if (!deleted) {
             return res.status(404).json({ message: "User tidak ditemukan!" });
         }
+        await emitDashboardUpdate(req.io);
         res.status(200).json({ message: "User berhasil dihapus!" });
     } catch (error) {
         handleError(res, error);

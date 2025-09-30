@@ -3,6 +3,7 @@ const { handleError } = require("../utils/errorHandler");
 const moment = require("moment-timezone");
 const R2Service = require("../services/r2Service");
 const { sendLaporanNotification, sendLaporanStatusNotification } = require("../services/notificationService");
+const emitDashboardUpdate = require("../utils/emitDashboardUpdate");
 
 exports.getAllLaporans = async (req, res) => {
     try {
@@ -69,6 +70,7 @@ exports.createLaporan = async (req, res) => {
 
         const newLaporan = await laporanService.createLaporan(data);
         await sendLaporanNotification(newLaporan);
+        await emitDashboardUpdate(req.io);
 
         res.status(201).json({
             message: "Laporan berhasil dibuat!",
@@ -108,7 +110,7 @@ exports.updateLaporan = async (req, res) => {
         if (updatedLaporan.status !== oldLaporan.status) {
             req.io.emit("laporanStatusUpdated", updatedLaporan);
         }
-
+        await emitDashboardUpdate(req.io);
         res.status(200).json({
             message: "Laporan berhasil diperbarui!",
             data: updatedLaporan,
@@ -126,7 +128,7 @@ exports.deleteLaporan = async (req, res) => {
         if (!deleted) {
             return res.status(404).json({ message: "Laporan tidak ditemukan!" });
         }
-
+        await emitDashboardUpdate(req.io);
         res.status(200).json({ message: "Laporan berhasil dihapus!" });
     } catch (error) {
         handleError(res, error);

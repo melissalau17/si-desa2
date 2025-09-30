@@ -3,7 +3,7 @@ const { handleError } = require("../utils/errorHandler");
 const moment = require("moment-timezone");
 const R2Service = require("../services/r2Service"); 
 const { sendBeritaNotification, sendUpdateBeritaNotification } = require("../services/notificationService");
-
+const emitDashboardUpdate = require("../utils/emitDashboardUpdate");
 
 exports.getAllBeritas = async (req, res) => {
     try {
@@ -67,6 +67,8 @@ exports.createBerita = async (req, res) => {
 
         await sendBeritaNotification(newBerita);
 
+        await emitDashboardUpdate(req.io);
+
         res.status(201).json({
             message: "Berita berhasil dibuat!",
             data: newBerita,
@@ -106,7 +108,7 @@ exports.updateBerita = async (req, res) => {
         if (oldBerita.status !== status || oldBerita.judul !== judul || oldBerita.kontent !== kontent) {
             await sendUpdateBeritaNotification(updatedBerita);
         }
-
+        await emitDashboardUpdate(req.io);
         res.status(200).json({
             message: "Berita berhasil diperbarui!",
             data: updatedBerita,
@@ -122,6 +124,7 @@ exports.deleteBerita = async (req, res) => {
         if (!deleted) {
             return res.status(404).json({ message: "Berita tidak ditemukan!" });
         }
+        await emitDashboardUpdate(req.io);
         res.status(200).json({ message: "Berita berhasil dihapus!" });
     } catch (error) {
         handleError(res, error);
