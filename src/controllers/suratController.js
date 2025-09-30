@@ -102,7 +102,7 @@ exports.createSurat = async (req, res) => {
 
     await sendSuratNotification(newSurat);
     if (req.io) {
-            await emitDashboardUpdate(req.io);
+        await emitDashboardUpdate(req.io);
     }
 
     res.status(201).json({
