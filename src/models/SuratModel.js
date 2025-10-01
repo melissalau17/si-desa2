@@ -7,6 +7,12 @@ exports.findById = (id) =>
     where: { surat_id: Number(id) },
   });
 
+const parseDateSafe = (value) => {
+  if (!value) return null;
+  const date = new Date(value);
+  return isNaN(date.getTime()) ? null : date;
+};
+
 exports.create = ({
   nik,
   nama,
@@ -29,20 +35,20 @@ exports.create = ({
     data: {
       nik,
       nama,
-      tempat_lahir,
-      tanggal_lahir: tanggal_lahir ? new Date(tanggal_lahir) : null,
+      tempat_lahir: tempat_lahir || null,
+      tanggal_lahir: parseDateSafe(tanggal_lahir),
       no_hp: no_hp || null,
       email: email || null,
-      jenis_kelamin,
-      agama,
+      jenis_kelamin: jenis_kelamin || null,
+      agama: agama || null,
       alamat,
       jenis_surat,
       tujuan_surat,
-      photo_ktp,
-      photo_kk,
-      foto_usaha,
-      waktu_kematian,
-      gaji_ortu,
+      photo_ktp: photo_ktp || null,
+      photo_kk: photo_kk || null,
+      foto_usaha: foto_usaha || null,
+      waktu_kematian: parseDateSafe(waktu_kematian),
+      gaji_ortu: gaji_ortu || null,
     },
   });
 
@@ -54,7 +60,6 @@ exports.update = (id, data) =>
     })
     .catch(() => null);
 
-// Hapus surat berdasarkan ID
 exports.remove = (id) =>
   prisma.surat
     .delete({
@@ -62,7 +67,6 @@ exports.remove = (id) =>
     })
     .catch(() => null);
 
-// Cari surat berdasarkan NIK
 exports.findByNIK = (nik) =>
   prisma.surat.findFirst({
     where: { nik },

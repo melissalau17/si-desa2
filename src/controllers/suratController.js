@@ -41,6 +41,12 @@ exports.getSuratById = async (req, res) => {
     }
 };
 
+const parsedTanggalLahir = tanggal_lahir
+  ? moment(tanggal_lahir, "DD-MM-YYYY", true).isValid()
+    ? moment(tanggal_lahir, "DD-MM-YYYY").toDate()
+    : null
+  : null;
+
 exports.createSurat = async (req, res) => {
   try {
     const {
@@ -83,7 +89,7 @@ exports.createSurat = async (req, res) => {
       nama,
       nik,
       tempat_lahir,
-      tanggal_lahir: new Date(tanggal_lahir),
+      tanggal_lahir: parsedTanggalLahir,
       jenis_kelamin,
       agama,
       alamat,
