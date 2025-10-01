@@ -29,10 +29,22 @@ exports.getLatest = (limit = 5) =>
 exports.getAllLaporans = async () => {
     try {
         const laporans = await prisma.laporan.findMany({
-            include: { votes: true },
+            include: {
+                votes: true,
+                user: {
+                    select: {
+                        nama: true,
+                        no_hp: true,
+                    }
+                }
+            },
             orderBy: { createdAt: "desc" },
         });
-        return laporans.map(l => ({ ...l, photo_url: normalizePhotoUrl(l.photo_url) }));
+
+        return laporans.map(l => ({
+            ...l,
+            photo_url: normalizePhotoUrl(l.photo_url),
+        }));
     } catch (err) {
         console.error("Error fetching all laporans:", err);
         return [];
@@ -43,9 +55,22 @@ exports.getLaporanById = async (id) => {
     try {
         const laporan = await prisma.laporan.findUnique({
             where: { laporan_id: parseInt(id) },
+            include: {
+                user: { 
+                    select: {
+                        nama: true,     
+                        no_hp: true,    
+                    }
+                }
+            },
         });
         if (!laporan) return null;
-        return { ...laporan, photo_url: normalizePhotoUrl(laporan.photo_url) };
+
+        return {
+            ...laporan,
+            photo_url: normalizePhotoUrl(laporan.photo_url),
+            user: laporan.user, 
+        };
     } catch (err) {
         console.error("Error fetching laporan by ID:", err);
         return null;
@@ -55,6 +80,7 @@ exports.getLaporanById = async (id) => {
 exports.createLaporan = async (data) => {
     try {
         const { keluhan, photo_url, tanggal, deskripsi, lokasi, vote, status, user_id } = data;
+        
         const newLaporan = await prisma.laporan.create({
             data: {
                 keluhan,
@@ -66,8 +92,20 @@ exports.createLaporan = async (data) => {
                 photo_url,
                 createdBy: user_id,
             },
+            include: {
+                user: {
+                    select: {
+                        nama: true,  
+                        no_hp: true,  
+                    }
+                }
+            }
         });
-        return { ...newLaporan, photo_url: normalizePhotoUrl(newLaporan.photo_url) };
+
+        return { 
+            ...newLaporan, 
+            photo_url: normalizePhotoUrl(newLaporan.photo_url)
+        };
     } catch (err) {
         console.error("Error creating laporan:", err);
         throw err;
