@@ -82,61 +82,98 @@ exports.createLaporan = async (req, res) => {
 };
 
 exports.updateLaporan = async (req, res) => {
-    try {
-        const { deskripsi, lokasi, keluhan, vote, status } = req.body;
-        const oldLaporan = await laporanService.getLaporanById(req.params.id);
-        if (!oldLaporan) {
-            return res.status(404).json({ message: "Laporan tidak ditemukan!" });
-        }
+  try {
+    const laporanId = parseInt(req.params.id);
+    const userId = req.user?.user_id;
 
-        let photoUrl = oldLaporan.photo_url; 
-
-        if (req.file) {
-            const newPhoto = req.file;
-            photoUrl = await R2Service.uploadFile(newPhoto.buffer, newPhoto.mimetype);
-        }
-
-        const updatePayload = {
-            ...(deskripsi !== undefined && { deskripsi }),
-            ...(lokasi !== undefined && { lokasi }),
-            ...(keluhan !== undefined && { keluhan }),
-            ...(vote !== undefined && { vote: parseInt(vote, 10) }),
-            ...(status !== undefined && { status }),
-            ...(photoUrl !== undefined && { photo_url: photoUrl }), 
-        };
-
-        const updatedLaporan = await laporanService.updateLaporan(req.params.id, updatePayload);
-
-        if (updatedLaporan.status !== oldLaporan.status) {
-            req.io.emit("laporanStatusUpdated", updatedLaporan);
-        }
-        await emitDashboardUpdate(req.io);
-        res.status(200).json({
-            message: "Laporan berhasil diperbarui!",
-            data: updatedLaporan,
-        });
-    } catch (error) {
-        handleError(res, error);
+    if (!userId) {
+      return res.status(401).json({ message: "User not authenticated" });
     }
+
+    const oldLaporan = await laporanService.getLaporanById(laporanId);
+    if (!oldLaporan) {
+      return res.status(404).json({ message: "Laporan tidak ditemukan!" });
+    }
+
+    let photoUrl = oldLaporan.photo_url;
+    if (req.file) {
+      const newPhoto = req.file;
+      photoUrl = await R2Service.uploadFile(newPhoto.buffer, newPhoto.mimetype);
+    }
+
+    // Check if this request is a vote
+    const isVote = req.body.vote !== undefined;
+
+    const updatePayload = {
+      ...(req.body.deskripsi !== undefined && { deskripsi: req.body.deskripsi }),
+      ...(req.body.lokasi !== undefined && { lokasi: req.body.lokasi }),
+      ...(req.body.keluhan !== undefined && { keluhan: req.body.keluhan }),
+      ...(photoUrl !== undefined && { photo_url: photoUrl }),
+    };
+
+    if (isVote) {
+      // Prevent double voting
+      if (oldLaporan.voters?.includes(userId)) {
+        return res.status(400).json({ message: "Anda sudah memberikan vote" });
+      }
+
+      updatePayload.vote = (oldLaporan.vote || 0) + 1;
+      updatePayload.voters = [...(oldLaporan.voters || []), userId].filter(Boolean);
+
+      // Optional: auto-change status when vote reaches threshold
+      if (updatePayload.vote >= 50 && oldLaporan.status !== "siap dikerjakan") {
+        updatePayload.status = "siap dikerjakan";
+      }
+    } else if (req.body.status !== undefined) {
+      updatePayload.status = req.body.status;
+    }
+
+    const updatedLaporan = await laporanService.updateLaporan(laporanId, updatePayload);
+
+    // Emit updates if necessary
+    if (updatedLaporan.status !== oldLaporan.status && req.io) {
+      req.io.emit("laporanStatusUpdated", updatedLaporan);
+    }
+    if (req.io) await emitDashboardUpdate(req.io);
+
+    res.status(200).json({
+      message: isVote ? "Vote berhasil!" : "Laporan berhasil diperbarui!",
+      data: updatedLaporan,
+    });
+  } catch (error) {
+    console.error("Error updating laporan:", error);
+    handleError(res, error);
+  }
 };
 
 exports.voteLaporan = async (req, res) => {
-  const { id } = req.params;
-  const { user_id } = req.body;
+  try {
+    const laporanId = parseInt(req.params.id);
+    const userId = req.user?.user_id;
 
-  const laporan = await laporanService.getLaporanById(id);
-  if (!laporan) return res.status(404).json({ message: 'Laporan not found' });
+    if (!userId) {
+      return res.status(401).json({ message: "User not authenticated" });
+    }
 
-  if (laporan.voters?.includes(user_id)) {
-    return res.status(400).json({ message: 'User already voted' });
+    const laporan = await laporanService.getLaporanById(laporanId);
+    if (!laporan) return res.status(404).json({ message: "Laporan tidak ditemukan!" });
+
+    // Prevent double voting
+    if (laporan.voters?.includes(userId)) {
+      return res.status(400).json({ message: "Anda sudah memberikan vote" });
+    }
+
+    // Safely update voters array
+    const updatedLaporan = await laporanService.updateLaporan(laporanId, {
+      vote: (laporan.vote || 0) + 1,
+      voters: [...(laporan.voters || []), userId].filter(Boolean),
+    });
+
+    res.status(200).json({ message: "Vote berhasil!", data: updatedLaporan });
+  } catch (error) {
+    console.error("Error updating laporan:", error);
+    res.status(500).json({ message: "Gagal vote", error: error.message });
   }
-
-  const updated = await laporanService.updateLaporan(id, {
-    vote: laporan.vote + 1,
-    voters: [...(laporan.voters || []), user_id],
-  });
-
-  res.status(200).json(updated);
 };
 
 exports.deleteLaporan = async (req, res) => {

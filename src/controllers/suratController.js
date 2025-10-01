@@ -100,8 +100,8 @@ exports.createSurat = async (req, res) => {
       waktu_kematian: waktu_kematian ? new Date(waktu_kematian) : null,
       gaji_ortu: gaji_ortu || null,
       foto_usaha: foto_usaha || null,
-      photo_ktp_url,
-      photo_kk_url,
+      photo_ktp: photo_ktp_url,
+      photo_kk: photo_kk_url,
       tanggal: moment().tz("Asia/Jakarta").toDate(),
       createdBy: parseInt(userId, 10),
     });
