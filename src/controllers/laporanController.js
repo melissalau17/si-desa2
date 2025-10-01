@@ -3,6 +3,8 @@ const { handleError } = require("../utils/errorHandler");
 const moment = require("moment-timezone");
 const R2Service = require("../services/r2Service");
 const { sendLaporanNotification } = require("../services/notificationService");
+const { PrismaClient } = require("@prisma/client")
+const prisma = new PrismaClient()
 
 exports.getAllLaporans = async (req, res) => {
     try {
