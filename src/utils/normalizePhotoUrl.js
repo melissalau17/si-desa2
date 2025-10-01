@@ -1,6 +1,6 @@
 const { GetObjectCommand } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
-const { r2Client, BUCKET_NAME } = require('./r2Config');
+const { r2Client, BUCKET_NAME } = require('../r2Config');
 
 async function normalizePhotoUrl(photoUrl) {
     if (!photoUrl) return null;
