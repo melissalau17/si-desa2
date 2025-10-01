@@ -83,7 +83,7 @@ app.use("/api", userRoutes);
 app.use("/api", beritaRoutes);
 app.use("/api", laporanRoutes);
 app.use("/api", suratRoutes);
-app.use("/api/dashboard", dashboardRoutes);
+app.use("/api", dashboardRoutes);
 
 io.on("connection", (socket) => {
     console.log("🔌 New client connected:", socket.id);
