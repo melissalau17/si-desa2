@@ -4,6 +4,8 @@ const R2Service = require("../services/r2Service");
 const { sendSuratNotification, sendSuratStatusNotification } = require("../services/notificationService");
 const moment = require("moment-timezone");
 const PdfService = require("../services/pdfService");
+const { PrismaClient } = require("@prisma/client")
+const prisma = new PrismaClient()
 
 exports.getAllSurat = async (req, res) => {
     try {
