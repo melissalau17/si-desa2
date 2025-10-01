@@ -26,6 +26,7 @@ model User {
   updatedAt DateTime  @updatedAt @db.DateTime(0)
   Vote      Vote[]
   surats    Surat[]
+  notifications Notification[]
 
   @@map("user")
 }
@@ -91,6 +92,7 @@ model Surat {
   
   user           User      @relation(fields: [createdBy], references: [user_id])
   @@map("surat")
+  notifications Notification[]
 }
 
 model keuangan {
@@ -111,3 +113,16 @@ model Vote {
   laporanId Int
   createdAt DateTime @default(now())
 }
+
+model notification {
+    id      Int      @id @default(autoincrement())
+    title   String
+    body    String
+    suratId Int
+    userId  Int?
+    createdAt DateTime @default(now())
+    isRead    Boolean  @default(false)
+    surat     Surat    @relation(fields: [suratId], references: [surat_id])
+    user      User?    @relation(fields: [userId], references: [user_id])
+}
+

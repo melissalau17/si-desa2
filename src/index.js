@@ -11,6 +11,7 @@ const beritaRoutes = require("./routes/beritaRoutes");
 const laporanRoutes = require("./routes/laporanRoutes");
 const suratRoutes = require("./routes/suratRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
 
 const app = express();
 const server = http.createServer(app);
@@ -78,6 +79,7 @@ app.use("/api", beritaRoutes);
 app.use("/api", laporanRoutes);
 app.use("/api", suratRoutes);
 app.use("/api", dashboardRoutes);
+app.use("/api", notificationRoutes);
 
 io.on("connection", (socket) => {
     console.log("🔌 New client connected:", socket.id);
