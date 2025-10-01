@@ -30,7 +30,7 @@ exports.create = ({
       nik,
       nama,
       tempat_lahir,
-      tanggal_lahir: tanggal_lahir || null,
+      tanggal_lahir: tanggal_lahir ? new Date(tanggal_lahir) : null,
       no_hp: no_hp || null,
       email: email || null,
       jenis_kelamin,
@@ -46,7 +46,6 @@ exports.create = ({
     },
   });
 
-// Update surat berdasarkan ID
 exports.update = (id, data) =>
   prisma.surat
     .update({
