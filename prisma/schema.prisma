@@ -114,7 +114,7 @@ model Vote {
   createdAt DateTime @default(now())
 }
 
-model notification {
+model Notification {
     id      Int      @id @default(autoincrement())
     title   String
     body    String
