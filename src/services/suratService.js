@@ -38,10 +38,17 @@ exports.getSuratById = async (id) => {
 exports.findByNIK = (nik) => suratModel.findByNIK(nik);
 
 exports.createSurat = async (data) => {
-  const newSurat = await suratModel.create(data);
-  const created = await suratModel.findById(newSurat.surat_id, {
+  const newSurat = await prisma.surat.create({
+    data: {
+      ...data, 
+    },
+  });
+
+  const created = await prisma.surat.findUnique({
+    where: { surat_id: newSurat.surat_id },
     include: { user: true },
   });
+
   return normalizeSuratPhotos(created);
 };
 

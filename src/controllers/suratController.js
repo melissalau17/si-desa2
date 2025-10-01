@@ -120,7 +120,6 @@ exports.createSurat = async (req, res) => {
   }
 };
 
-
 exports.updateSurat = async (req, res) => {
   try {
     const { status } = req.body;
