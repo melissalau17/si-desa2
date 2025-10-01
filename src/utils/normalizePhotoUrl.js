@@ -1,6 +1,3 @@
-const { GetObjectCommand } = require('@aws-sdk/client-s3');
-const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
-const { R2_PUBLIC_URL } = require('../r2Config');
 
 /**
  * Normalize photo URL to be publicly accessible.
@@ -11,7 +8,7 @@ function normalizePhotoUrl(photoUrl) {
   if (!photoUrl) return null;
   if (photoUrl.startsWith("http")) return photoUrl;
 
-  return `${R2_PUBLIC_URL}/${photoUrl}`;
+  return `${process.env.R2_PUBLIC_URL}/${photoUrl}`;
 }
 
 module.exports = normalizePhotoUrl;

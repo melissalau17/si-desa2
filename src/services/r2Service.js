@@ -1,5 +1,4 @@
-const { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } = require('@aws-sdk/client-s3');
-const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
+const { S3Client, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
 
 const ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
 const BUCKET_NAME = process.env.R2_BUCKET_NAME;
