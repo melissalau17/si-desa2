@@ -16,7 +16,7 @@ exports.getDashboardData = async () => {
       suratService.countNew(),
       laporanService.countNew(),
       beritaService.countNewThisWeek(),
-      userService.countNewThisMonth(),
+      userService.countNewThisWeek(),
     ]);
 
     const activities = await exports.getLatestActivities();
