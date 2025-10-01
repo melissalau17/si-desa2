@@ -23,6 +23,7 @@ model User {
   email     String?   @db.VarChar(255)
   laporan   Laporan[]
   votes     Vote[]    
+  surats    Surat[] @relation("UserSurats")
 
   @@map("user")
 }
@@ -85,6 +86,7 @@ model Surat {
   createdAt      DateTime? @default(now()) @db.DateTime(0)
   updatedAt      DateTime? @db.DateTime(0)
   createdBy      Int
+  user           User   @relation("UserSurats", fields: [createdBy], references: [user_id])
 
   @@map("surat")
 }
