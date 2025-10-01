@@ -119,40 +119,44 @@ exports.createSurat = async (req, res) => {
 };
 
 exports.updateSurat = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { status } = req.body;
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
 
-        const updatedSurat = await prisma.surat.update({
-            where: { surat_id: Number(id) },
-            data: { status },
-            include: { user: true }
+    const updatedSurat = await prisma.surat.update({
+      where: { surat_id: Number(id) },
+      data: { status },
+      include: { user: true } 
+    });
+
+    if (updatedSurat.status.toLowerCase() === "selesai") {
+      const notif = await notificationService.createNotification({
+        title: "Surat Selesai",
+        body: `Surat ID ${updatedSurat.surat_id} selesai diproses.`,
+        type: "surat",
+        userId: updatedSurat.createdBy,
+        suratId: updatedSurat.surat_id,
+      });
+
+      console.log("Notification created in DB:", notif);
+
+      if (req.io) {
+        req.io.emit("notification", {
+          title: notif.title,
+          body: notif.body,
+          time: notif.createdAt,
         });
-
-        if (req.io && updatedSurat.status === "selesai") {
-            await notificationService.createNotification({
-                title: "Surat Selesai",
-                body: `Surat ID ${updatedSurat.surat_id} selesai diproses.`,
-                type: "surat",
-                userId: updatedSurat.createdBy,
-                suratId: updatedSurat.surat_id,
-            });
-
-            req.io.emit("notification", {
-                title: "Surat Selesai",
-                body: `Surat ID ${updatedSurat.surat_id} selesai diproses.`,
-                time: new Date().toISOString(),
-            });
-        }
-
-        res.status(200).json({
-            message: "Surat updated successfully",
-            data: updatedSurat,
-        });
-    } catch (error) {
-        console.error("Error updating surat:", error);
-        res.status(500).json({ message: "Something Wrong!", error: error.message });
+      }
     }
+
+    res.status(200).json({
+      message: "Surat updated successfully",
+      data: updatedSurat,
+    });
+  } catch (error) {
+    console.error("Error updating surat:", error);
+    res.status(500).json({ message: "Something Wrong!", error: error.message });
+  }
 };
 
 exports.deleteSurat = async (req, res) => {

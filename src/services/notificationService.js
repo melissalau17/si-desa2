@@ -7,8 +7,8 @@ exports.createNotification = async (data) => {
       title: data.title,
       body: data.body,
       type: data.type,
-      userId: data.userId,
-      suratId: data.suratId,
+      userId: data.userId || null,
+      suratId: data.suratId || null,
     },
   });
 };
