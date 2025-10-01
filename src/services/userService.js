@@ -17,13 +17,12 @@ exports.countAll = async () => {
   return totalUsers;
 };
 
-exports.countNewThisMonth = () => {
-  const startOfMonth = new Date();
-  startOfMonth.setDate(1);
-  startOfMonth.setHours(0, 0, 0, 0);
+exports.countNewThisWeek = () => {
+  const oneWeekAgo = new Date();
+  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
   return prisma.user.count({
-    where: { createdAt: { gte: startOfMonth } },
+    where: { createdAt: { gte: oneWeekAgo } },
   });
 };
 

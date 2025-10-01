@@ -22,8 +22,6 @@ model User {
   role      String    @default("user")
   email     String?   @db.VarChar(255)
   laporan   Laporan[]
-  votes     Vote[]    
-  surats    Surat[] @relation("UserSurats")
 
   @@map("user")
 }
@@ -57,7 +55,6 @@ model Laporan {
   updatedAt  DateTime? @db.DateTime(0)
   createdBy  Int
   user       User?     @relation(fields: [user_id], references: [user_id])
-  votes      Vote[]
 
   @@index([user_id], map: "laporan_user_id_fkey")
   @@map("laporan")
@@ -86,17 +83,16 @@ model Surat {
   createdAt      DateTime? @default(now()) @db.DateTime(0)
   updatedAt      DateTime? @db.DateTime(0)
   createdBy      Int
-  user           User   @relation("UserSurats", fields: [createdBy], references: [user_id])
 
   @@map("surat")
 }
 
-model Vote {
-  id         Int     @id @default(autoincrement())
-  user       User    @relation(fields: [userId], references: [user_id])
-  userId     Int
-  laporan    Laporan @relation(fields: [laporanId], references: [laporan_id])
-  laporanId  Int
-
-  @@unique([userId, laporanId])
+model keuangan {
+  keuangan_id    Int      @id @default(autoincrement())
+  jenisTransaksi String
+  keterangan     String
+  kategori       String
+  tanggal        DateTime
+  jumlah         Decimal  @db.Decimal(15, 2)
+  catatan        String
 }
