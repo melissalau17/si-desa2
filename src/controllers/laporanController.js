@@ -70,7 +70,7 @@ exports.createLaporan = async (req, res) => {
 
         const newLaporan = await laporanService.createLaporan(data);
         await sendLaporanNotification(newLaporan);
-        await emitDashboardUpdate(req.io);
+        if (req.io) emitDashboardUpdate(req.io);
 
         res.status(201).json({
             message: "Laporan berhasil dibuat!",
@@ -134,7 +134,7 @@ exports.updateLaporan = async (req, res) => {
         include: { votes: true },
       });
 
-      if (req.io) await emitDashboardUpdate(req.io);
+      if (req.io) emitDashboardUpdate(req.io);
 
       return res.status(200).json({ message: "Vote berhasil!", data: updatedLaporan });
     } else if (req.body.status !== undefined) {
@@ -150,7 +150,7 @@ exports.updateLaporan = async (req, res) => {
     if (updatedLaporan.status !== oldLaporan.status && req.io) {
       req.io.emit("laporanStatusUpdated", updatedLaporan);
     }
-    if (req.io) await emitDashboardUpdate(req.io);
+    if (req.io) emitDashboardUpdate(req.io);
 
     res.status(200).json({
       message: "Laporan berhasil diperbarui!",
@@ -171,7 +171,7 @@ exports.voteLaporan = async (req, res) => {
 
     const updatedLaporan = await laporanService.voteLaporan(laporanId, userId);
 
-    if (req.io) await emitDashboardUpdate(req.io);
+    if (req.io) emitDashboardUpdate(req.io);
 
     res.status(200).json({ message: "Vote berhasil!", data: updatedLaporan });
   } catch (error) {
@@ -187,7 +187,7 @@ exports.deleteLaporan = async (req, res) => {
         if (!deleted) {
             return res.status(404).json({ message: "Laporan tidak ditemukan!" });
         }
-        await emitDashboardUpdate(req.io);
+        if (req.io) emitDashboardUpdate(req.io);
         res.status(200).json({ message: "Laporan berhasil dihapus!" });
     } catch (error) {
         handleError(res, error);

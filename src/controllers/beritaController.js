@@ -75,7 +75,7 @@ exports.createBerita = async (req, res) => {
         await sendBeritaNotification(newBerita);
         
         if (req.io) {
-            await emitDashboardUpdate(req.io);
+            emitDashboardUpdate(req.io);
         }
 
         res.status(201).json({
@@ -119,7 +119,7 @@ exports.updateBerita = async (req, res) => {
         }
         
         if (req.io) {
-            await emitDashboardUpdate(req.io);
+            emitDashboardUpdate(req.io);
         }
 
         res.status(200).json({
@@ -139,7 +139,7 @@ exports.deleteBerita = async (req, res) => {
         }
         
         if (req.io) {
-            await emitDashboardUpdate(req.io);
+            emitDashboardUpdate(req.io);
         }
         
         res.status(200).json({ message: "Berita berhasil dihapus!" });

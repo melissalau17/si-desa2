@@ -108,7 +108,7 @@ exports.createSurat = async (req, res) => {
 
     await sendSuratNotification(newSurat);
     if (req.io) {
-        await emitDashboardUpdate(req.io);
+        emitDashboardUpdate(req.io);
     }
 
     res.status(201).json({
@@ -142,7 +142,7 @@ exports.updateSurat = async (req, res) => {
       await sendSuratStatusNotification(updatedSurat);
     }
     if (req.io) {
-        await emitDashboardUpdate(req.io);
+        emitDashboardUpdate(req.io);
     }
     res.status(200).json({
       message: "Surat berhasil diperbarui!",
@@ -158,7 +158,7 @@ exports.deleteSurat = async (req, res) => {
         const deleted = await suratService.deleteSurat(req.params.id);
         if (!deleted) return res.status(404).json({ message: "Surat tidak ditemukan!" });
         if (req.io) {
-            await emitDashboardUpdate(req.io);
+            emitDashboardUpdate(req.io);
         }
         res.status(200).json({ message: "Surat berhasil dihapus!" });
     } catch (error) {

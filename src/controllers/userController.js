@@ -158,7 +158,7 @@ exports.updateUser = async (req, res) => {
         if (!updatedUser) {
             return res.status(404).json({ message: "User tidak ditemukan!" });
         }
-        await emitDashboardUpdate(req.io);
+        if (req.io) emitDashboardUpdate(req.io);
         res.status(200).json({
             message: "User berhasil diperbarui!",
             data: updatedUser,
@@ -175,7 +175,7 @@ exports.deleteUser = async (req, res) => {
         if (!deleted) {
             return res.status(404).json({ message: "User tidak ditemukan!" });
         }
-        await emitDashboardUpdate(req.io);
+        if (req.io) emitDashboardUpdate(req.io);
         res.status(200).json({ message: "User berhasil dihapus!" });
     } catch (error) {
         handleError(res, error);
