@@ -4,7 +4,6 @@ const R2Service = require("../services/r2Service");
 const { sendSuratNotification, sendSuratStatusNotification } = require("../services/notificationService");
 const moment = require("moment-timezone");
 const PdfService = require("../services/pdfService");
-const emitDashboardUpdate = require("../utils/emitDashboardUpdate");
 
 exports.getAllSurat = async (req, res) => {
     try {
@@ -107,9 +106,6 @@ exports.createSurat = async (req, res) => {
     });
 
     await sendSuratNotification(newSurat);
-    if (req.io) {
-        emitDashboardUpdate(req.io);
-    }
 
     res.status(201).json({
       message: "Surat berhasil dibuat!",
@@ -141,9 +137,7 @@ exports.updateSurat = async (req, res) => {
     if (status && oldSurat.status !== updatedSurat.status) {
       await sendSuratStatusNotification(updatedSurat);
     }
-    if (req.io) {
-        emitDashboardUpdate(req.io);
-    }
+
     res.status(200).json({
       message: "Surat berhasil diperbarui!",
       data: updatedSurat,
@@ -157,9 +151,7 @@ exports.deleteSurat = async (req, res) => {
     try {
         const deleted = await suratService.deleteSurat(req.params.id);
         if (!deleted) return res.status(404).json({ message: "Surat tidak ditemukan!" });
-        if (req.io) {
-            emitDashboardUpdate(req.io);
-        }
+       
         res.status(200).json({ message: "Surat berhasil dihapus!" });
     } catch (error) {
         handleError(res, error);

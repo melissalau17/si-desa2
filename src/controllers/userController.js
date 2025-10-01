@@ -5,7 +5,6 @@ const multer = require("multer");
 const R2Service = require("../services/r2Service"); 
 const NotificationService = require("../services/notificationService"); 
 const { hashPassword } = require("../utils/hash");
-const emitDashboardUpdate = require("../utils/emitDashboardUpdate");
 
 const JWT_SECRET = process.env.JWT_SECRET || "rahasia_super_rahasia";
 
@@ -65,7 +64,6 @@ exports.createUser = async (req, res) => {
     } = req.body;
 
     const photoFile = req.file; 
-    const io = req.io;
 
     if (!nama || !username || !password || !NIK || !agama || !alamat || !jenis_kel || !no_hp || !role) {
       return res.status(400).json({ message: "Semua field harus diisi!" });
@@ -158,7 +156,6 @@ exports.updateUser = async (req, res) => {
         if (!updatedUser) {
             return res.status(404).json({ message: "User tidak ditemukan!" });
         }
-        if (req.io) emitDashboardUpdate(req.io);
         res.status(200).json({
             message: "User berhasil diperbarui!",
             data: updatedUser,
@@ -175,7 +172,6 @@ exports.deleteUser = async (req, res) => {
         if (!deleted) {
             return res.status(404).json({ message: "User tidak ditemukan!" });
         }
-        if (req.io) emitDashboardUpdate(req.io);
         res.status(200).json({ message: "User berhasil dihapus!" });
     } catch (error) {
         handleError(res, error);

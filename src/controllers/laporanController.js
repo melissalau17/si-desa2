@@ -2,8 +2,7 @@ const laporanService = require("../services/laporanService");
 const { handleError } = require("../utils/errorHandler");
 const moment = require("moment-timezone");
 const R2Service = require("../services/r2Service");
-const { sendLaporanNotification, sendLaporanStatusNotification } = require("../services/notificationService");
-const emitDashboardUpdate = require("../utils/emitDashboardUpdate");
+const { sendLaporanNotification } = require("../services/notificationService");
 
 exports.getAllLaporans = async (req, res) => {
     try {
@@ -70,7 +69,6 @@ exports.createLaporan = async (req, res) => {
 
         const newLaporan = await laporanService.createLaporan(data);
         await sendLaporanNotification(newLaporan);
-        if (req.io) emitDashboardUpdate(req.io);
 
         res.status(201).json({
             message: "Laporan berhasil dibuat!",
@@ -134,8 +132,6 @@ exports.updateLaporan = async (req, res) => {
         include: { votes: true },
       });
 
-      if (req.io) emitDashboardUpdate(req.io);
-
       return res.status(200).json({ message: "Vote berhasil!", data: updatedLaporan });
     } else if (req.body.status !== undefined) {
       updatePayload.status = req.body.status;
@@ -146,11 +142,6 @@ exports.updateLaporan = async (req, res) => {
       data: updatePayload,
       include: { votes: true },
     });
-
-    if (updatedLaporan.status !== oldLaporan.status && req.io) {
-      req.io.emit("laporanStatusUpdated", updatedLaporan);
-    }
-    if (req.io) emitDashboardUpdate(req.io);
 
     res.status(200).json({
       message: "Laporan berhasil diperbarui!",
@@ -171,8 +162,6 @@ exports.voteLaporan = async (req, res) => {
 
     const updatedLaporan = await laporanService.voteLaporan(laporanId, userId);
 
-    if (req.io) emitDashboardUpdate(req.io);
-
     res.status(200).json({ message: "Vote berhasil!", data: updatedLaporan });
   } catch (error) {
     console.error("Error voting laporan:", error);
@@ -187,7 +176,6 @@ exports.deleteLaporan = async (req, res) => {
         if (!deleted) {
             return res.status(404).json({ message: "Laporan tidak ditemukan!" });
         }
-        if (req.io) emitDashboardUpdate(req.io);
         res.status(200).json({ message: "Laporan berhasil dihapus!" });
     } catch (error) {
         handleError(res, error);
