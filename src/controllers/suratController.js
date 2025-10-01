@@ -41,12 +41,6 @@ exports.getSuratById = async (req, res) => {
     }
 };
 
-const parsedTanggalLahir = tanggal_lahir
-  ? moment(tanggal_lahir, "DD-MM-YYYY", true).isValid()
-    ? moment(tanggal_lahir, "DD-MM-YYYY").toDate()
-    : null
-  : null;
-
 exports.createSurat = async (req, res) => {
   try {
     const {
@@ -65,6 +59,12 @@ exports.createSurat = async (req, res) => {
       gaji_ortu,
       foto_usaha,
     } = req.body;
+
+    const parsedTanggalLahir = tanggal_lahir
+    ? moment(tanggal_lahir, "DD-MM-YYYY", true).isValid()
+        ? moment(tanggal_lahir, "DD-MM-YYYY").toDate()
+        : null
+    : null;
 
     if (!nama || !nik || !alamat || !jenis_surat || !tujuan_surat) {
       return res.status(400).json({ message: "Semua field wajib diisi!" });
