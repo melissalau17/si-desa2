@@ -55,14 +55,13 @@ model Laporan {
   lokasi     String
   vote       Int?      @default(0)
   status     String
-  user_id    Int?
-  createdAt  DateTime  @default(now()) @db.DateTime(0)
-  updatedAt  DateTime  @updatedAt @db.DateTime(0)
   createdBy  Int
-  user       User?     @relation(fields: [user_id], references: [user_id])
+  user       User      @relation(fields: [createdBy], references: [user_id])
   votes      Vote[]
 
-  @@index([user_id], map: "laporan_user_id_fkey")
+  createdAt  DateTime  @default(now()) @db.DateTime(0)
+  updatedAt  DateTime  @updatedAt @db.DateTime(0)
+
   @@map("laporan")
 }
 
