@@ -31,6 +31,17 @@ exports.countAllByStatus = async (status) => {
   });
 };
 
+exports.countNew = async () => {
+  const oneWeekAgo = new Date();
+  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7); 
+
+  return await prisma.surat.count({
+    where: {
+      createdAt: { gte: oneWeekAgo },
+    },
+  });
+}
+
 exports.getAllSurat = async () => {
   const surats = await suratModel.findAll({
     include: { user: true },
@@ -44,6 +55,12 @@ exports.getSuratById = async (id) => {
   });
   return normalizeSuratPhotos(surat);
 };
+
+exports.getLatest = (limit = 5) =>
+  prisma.surat.findMany({
+    orderBy: { createdAt: 'desc' },
+    take: limit,
+  });
 
 exports.findByNIK = (nik) => suratModel.findByNIK(nik);
 
