@@ -11,7 +11,7 @@ function normalizePhotoUrl(photoUrl) {
   if (!photoUrl) return null;
   if (photoUrl.startsWith("http")) return photoUrl;
 
-  return `${PUBLIC_DEV_URL}/${photoUrl}`;
+  return `${R2_PUBLIC_URL}/${photoUrl}`;
 }
 
 module.exports = normalizePhotoUrl;
