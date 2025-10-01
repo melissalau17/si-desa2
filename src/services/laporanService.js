@@ -104,7 +104,6 @@ exports.voteLaporan = async (laporanId, userId) => {
     });
     if (!laporan) throw new Error("Laporan not found");
 
-    // Check if user already voted
     if (laporan.voters.includes(userId)) {
       throw new Error("User already voted");
     }
@@ -113,7 +112,7 @@ exports.voteLaporan = async (laporanId, userId) => {
       where: { laporan_id: parseInt(laporanId) },
       data: {
         vote: laporan.vote + 1,
-        voters: { push: userId }, // add userId to voters array
+        voters: { push: userId },
       },
     });
 
