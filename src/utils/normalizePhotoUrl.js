@@ -8,7 +8,7 @@ function normalizePhotoUrl(photoUrl) {
   if (!photoUrl) return null;
   if (photoUrl.startsWith("http")) return photoUrl;
 
-  return `${process.env.R2_PUBLIC_URL}/${photoUrl}`;
+  return `${process.env.NEXT_PUBLIC_R2_URL}/${photoUrl}`;
 }
 
 module.exports = normalizePhotoUrl;

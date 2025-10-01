@@ -4,7 +4,7 @@ const r2Client = require('../r2Config');
 const { DeleteObjectCommand } = require('@aws-sdk/client-s3');
 const normalizePhotoUrl = require('../utils/normalizePhotoUrl'); 
 
-const PUBLIC_URL = process.env.R2_PUBLIC_URL;
+const PUBLIC_URL = process.env.NEXT_PUBLIC_R2_URL;
 
 exports.countAll = () => prisma.berita.count();
 

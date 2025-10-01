@@ -2,7 +2,7 @@ const suratModel = require("../models/SuratModel");
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-const PUBLIC_URL = process.env.R2_PUBLIC_URL;
+const PUBLIC_URL = process.env.NEXT_PUBLIC_R2_URL;
 
 function normalizeSuratPhotos(surat) {
   if (!surat) return null;

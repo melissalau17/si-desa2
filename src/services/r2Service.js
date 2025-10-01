@@ -25,7 +25,7 @@ exports.uploadFile = async (fileBuffer, mimeType) => {
   try {
     await r2Client.send(new PutObjectCommand(params));
 
-    return `${process.env.R2_PUBLIC_URL}/${fileName}`;
+    return `${process.env.NEXT_PUBLIC_R2_URL}/${fileName}`;
   } catch (error) {
     console.error('Error uploading file to R2:', error);
     throw error;

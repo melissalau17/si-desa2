@@ -4,7 +4,7 @@ const { createError } = require("../utils/errorHandler");
 const r2Client = require('../r2Config');
 const R2Service = require("../services/r2Service");
 const { DeleteObjectCommand } = require('@aws-sdk/client-s3');
-const PUBLIC_URL = process.env.R2_PUBLIC_URL;
+const PUBLIC_URL = process.env.NEXT_PUBLIC_R2_URL;
 const prisma = require("../prisma/prismaClient");
 const normalizePhotoUrl = require('../utils/normalizePhotoUrl'); 
 
