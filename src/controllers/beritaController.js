@@ -70,8 +70,6 @@ exports.createBerita = async (req, res) => {
             user_id: Number(userId),
         });
 
-        await sendBeritaNotification(newBerita);
-
         res.status(201).json({
             message: "Berita berhasil dibuat!",
             data: newBerita,
@@ -107,10 +105,6 @@ exports.updateBerita = async (req, res) => {
         };
 
         const updatedBerita = await beritaService.updateBerita(req.params.id, updatePayload);
-        
-        if (oldBerita.status !== status || oldBerita.judul !== judul || oldBerita.kontent !== kontent) {
-            await sendUpdateBeritaNotification(updatedBerita);
-        }
 
         res.status(200).json({
             message: "Berita berhasil diperbarui!",

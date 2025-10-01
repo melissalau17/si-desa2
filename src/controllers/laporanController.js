@@ -2,7 +2,6 @@ const laporanService = require("../services/laporanService");
 const { handleError } = require("../utils/errorHandler");
 const moment = require("moment-timezone");
 const R2Service = require("../services/r2Service");
-const { sendLaporanNotification } = require("../services/notificationService");
 const { PrismaClient } = require("@prisma/client")
 const prisma = new PrismaClient()
 
@@ -70,7 +69,6 @@ exports.createLaporan = async (req, res) => {
         };
 
         const newLaporan = await laporanService.createLaporan(data);
-        await sendLaporanNotification(newLaporan);
 
         res.status(201).json({
             message: "Laporan berhasil dibuat!",
