@@ -26,14 +26,7 @@ exports.uploadFile = async (fileBuffer, mimeType) => {
   try {
     await r2Client.send(new PutObjectCommand(params));
 
-    // Generate a signed URL valid for 1 hour
-    const getObjectCommand = new GetObjectCommand({
-      Bucket: BUCKET_NAME,
-      Key: fileName,
-    });
-
-    const signedUrl = await getSignedUrl(r2Client, getObjectCommand, { expiresIn: 3600 });
-    return signedUrl;
+    return `${process.env.R2_PUBLIC_URL}/${fileName}`;
   } catch (error) {
     console.error('Error uploading file to R2:', error);
     throw error;
