@@ -101,19 +101,22 @@ exports.voteLaporan = async (laporanId, userId) => {
   try {
     const laporan = await prisma.laporan.findUnique({
       where: { laporan_id: parseInt(laporanId) },
+      include: { votes: true }, 
     });
     if (!laporan) throw new Error("Laporan not found");
 
-    if (laporan.voters.includes(userId)) {
-      throw new Error("User already voted");
-    }
+    const alreadyVoted = laporan.votes.some(v => v.userId === userId);
+    if (alreadyVoted) throw new Error("User already voted");
 
     const updated = await prisma.laporan.update({
       where: { laporan_id: parseInt(laporanId) },
       data: {
-        vote: laporan.vote + 1,
-        voters: { push: userId },
+        vote: { increment: 1 },
+        votes: {
+          create: { userId }, 
+        },
       },
+      include: { votes: true },
     });
 
     return updated;
