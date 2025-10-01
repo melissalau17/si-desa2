@@ -1,24 +1,17 @@
 const { GetObjectCommand } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
-const { r2Client, BUCKET_NAME } = require('../r2Config');
+const { R2_PUBLIC_URL } = require('../r2Config');
 
-async function normalizePhotoUrl(photoUrl) {
-    if (!photoUrl) return null;
+/**
+ * Normalize photo URL to be publicly accessible.
+ * @param {string} photoUrl - The stored file path, e.g., "uploads/filename.jpg"
+ * @returns {string|null} Fully qualified public URL or null if no photo
+ */
+function normalizePhotoUrl(photoUrl) {
+  if (!photoUrl) return null;
+  if (photoUrl.startsWith("http")) return photoUrl;
 
-    if (photoUrl.startsWith("http")) return photoUrl;
-
-    const command = new GetObjectCommand({
-        Bucket: BUCKET_NAME,
-        Key: photoUrl,
-    });
-
-    try {
-        const signedUrl = await getSignedUrl(r2Client, command, { expiresIn: 3600 });
-        return signedUrl;
-    } catch (err) {
-        console.error("Error generating signed URL:", err);
-        return null;
-    }
+  return `${PUBLIC_DEV_URL}/${photoUrl}`;
 }
 
 module.exports = normalizePhotoUrl;
