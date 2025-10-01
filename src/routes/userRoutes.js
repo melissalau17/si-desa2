@@ -5,6 +5,8 @@ const multer = require('multer');
 const userController = require("../controllers/userController");
 const validateUserInput = require("../middlewares/validateUserInput");
 const authMiddleware = require("../middlewares/authMiddleware");
+const { PrismaClient } = require("@prisma/client")
+const prisma = new PrismaClient()
 
 const upload = multer({ storage: multer.memoryStorage() });
 

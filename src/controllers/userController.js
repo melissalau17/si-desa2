@@ -5,6 +5,8 @@ const multer = require("multer");
 const R2Service = require("../services/r2Service"); 
 const NotificationService = require("../services/notificationService"); 
 const { hashPassword } = require("../utils/hash");
+const { PrismaClient } = require("@prisma/client")
+const prisma = new PrismaClient()
 
 const JWT_SECRET = process.env.JWT_SECRET || "rahasia_super_rahasia";
 

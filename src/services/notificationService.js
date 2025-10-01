@@ -1,4 +1,5 @@
-const { prisma } = require("../utils/prisma");
+const { PrismaClient } = require("@prisma/client")
+const prisma = new PrismaClient()
 
 exports.createNotification = async (data) => {
   return await prisma.notification.create({ data });
