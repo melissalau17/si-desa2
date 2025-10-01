@@ -101,9 +101,9 @@ exports.updateLaporan = async (req, res) => {
       photoUrl = await R2Service.uploadFile(newPhoto.buffer, newPhoto.mimetype);
     }
 
-    // Check if this request is a vote
     const isVote = req.body.vote !== undefined;
 
+    // Base update payload for non-vote fields
     const updatePayload = {
       ...(req.body.deskripsi !== undefined && { deskripsi: req.body.deskripsi }),
       ...(req.body.lokasi !== undefined && { lokasi: req.body.lokasi }),
@@ -112,32 +112,54 @@ exports.updateLaporan = async (req, res) => {
     };
 
     if (isVote) {
-      // Prevent double voting
-      if (oldLaporan.voters?.includes(userId)) {
+      // Check if the user has already voted
+      const existingVote = await prisma.vote.findFirst({
+        where: {
+          userId,
+          laporanId,
+        },
+      });
+
+      if (existingVote) {
         return res.status(400).json({ message: "Anda sudah memberikan vote" });
       }
 
-      updatePayload.vote = (oldLaporan.vote || 0) + 1;
-      updatePayload.voters = [...(oldLaporan.voters || []), userId].filter(Boolean);
+      // Create new vote and increment vote count
+      const updatedLaporan = await prisma.laporan.update({
+        where: { laporan_id: laporanId },
+        data: {
+          ...updatePayload,
+          vote: { increment: 1 },
+          votes: { create: { userId } },
+          status: oldLaporan.vote + 1 >= 50 && oldLaporan.status !== "siap dikerjakan"
+            ? "siap dikerjakan"
+            : oldLaporan.status,
+        },
+        include: { votes: true },
+      });
 
-      // Optional: auto-change status when vote reaches threshold
-      if (updatePayload.vote >= 50 && oldLaporan.status !== "siap dikerjakan") {
-        updatePayload.status = "siap dikerjakan";
-      }
+      if (req.io) await emitDashboardUpdate(req.io);
+
+      return res.status(200).json({ message: "Vote berhasil!", data: updatedLaporan });
     } else if (req.body.status !== undefined) {
       updatePayload.status = req.body.status;
     }
 
-    const updatedLaporan = await laporanService.updateLaporan(laporanId, updatePayload);
+    // Normal update without voting
+    const updatedLaporan = await prisma.laporan.update({
+      where: { laporan_id: laporanId },
+      data: updatePayload,
+      include: { votes: true },
+    });
 
-    // Emit updates if necessary
+    // Emit updates if status changed
     if (updatedLaporan.status !== oldLaporan.status && req.io) {
       req.io.emit("laporanStatusUpdated", updatedLaporan);
     }
     if (req.io) await emitDashboardUpdate(req.io);
 
     res.status(200).json({
-      message: isVote ? "Vote berhasil!" : "Laporan berhasil diperbarui!",
+      message: "Laporan berhasil diperbarui!",
       data: updatedLaporan,
     });
   } catch (error) {
@@ -151,28 +173,16 @@ exports.voteLaporan = async (req, res) => {
     const laporanId = parseInt(req.params.id);
     const userId = req.user?.user_id;
 
-    if (!userId) {
-      return res.status(401).json({ message: "User not authenticated" });
-    }
+    if (!userId) return res.status(401).json({ message: "User not authenticated" });
 
-    const laporan = await laporanService.getLaporanById(laporanId);
-    if (!laporan) return res.status(404).json({ message: "Laporan tidak ditemukan!" });
+    const updatedLaporan = await laporanService.voteLaporan(laporanId, userId);
 
-    // Prevent double voting
-    if (laporan.voters?.includes(userId)) {
-      return res.status(400).json({ message: "Anda sudah memberikan vote" });
-    }
-
-    // Safely update voters array
-    const updatedLaporan = await laporanService.updateLaporan(laporanId, {
-      vote: (laporan.vote || 0) + 1,
-      voters: [...(laporan.voters || []), userId].filter(Boolean),
-    });
+    if (req.io) await emitDashboardUpdate(req.io);
 
     res.status(200).json({ message: "Vote berhasil!", data: updatedLaporan });
   } catch (error) {
-    console.error("Error updating laporan:", error);
-    res.status(500).json({ message: "Gagal vote", error: error.message });
+    console.error("Error voting laporan:", error);
+    res.status(400).json({ message: error.message });
   }
 };
 
