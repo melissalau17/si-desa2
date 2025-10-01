@@ -23,7 +23,7 @@ model User {
   email     String?   @db.VarChar(255)
   laporan   Laporan[]
   createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  updatedAt DateTime  @updatedAt @db.DateTime(0)
   Vote      Vote[]
 
   @@map("user")
@@ -38,7 +38,7 @@ model Berita {
   kontent   String
   status    String
   createdAt DateTime  @default(now()) @db.DateTime(0)
-  updatedAt DateTime  @db.DateTime(0)
+  updatedAt DateTime  @updatedAt @db.DateTime(0)
   createdBy Int
 
   @@map("berita")
@@ -55,7 +55,7 @@ model Laporan {
   status     String
   user_id    Int?
   createdAt  DateTime  @default(now()) @db.DateTime(0)
-  updatedAt  DateTime  @db.DateTime(0)
+  updatedAt  DateTime  @updatedAt @db.DateTime(0)
   createdBy  Int
   user       User?     @relation(fields: [user_id], references: [user_id])
   votes      Vote[]
@@ -85,7 +85,7 @@ model Surat {
   no_hp          String?
   email          String?   @default("")
   createdAt      DateTime  @default(now()) @db.DateTime(0)
-  updatedAt      DateTime  @db.DateTime(0)
+  updatedAt      DateTime  @updatedAt @db.DateTime(0)
   createdBy      Int
 
   @@map("surat")
