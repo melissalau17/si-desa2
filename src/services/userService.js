@@ -5,13 +5,17 @@ const r2Client = require('../r2Config');
 const R2Service = require("../services/r2Service");
 const { DeleteObjectCommand } = require('@aws-sdk/client-s3');
 const PUBLIC_URL = process.env.R2_PUBLIC_URL;
+const prisma = require("../prisma/prismaClient");
 
 function normalizePhotoUrl(photoUrl) {
     if (!photoUrl) return null;
     return photoUrl.startsWith("http") ? photoUrl : `${PUBLIC_URL}/${photoUrl}`;
 }
 
-exports.countAll = () => prisma.user.count();
+exports.countAll = async () => {
+  const totalUsers = await prisma.user.count();
+  return totalUsers;
+};
 
 exports.countNewThisMonth = () => {
   const startOfMonth = new Date();
