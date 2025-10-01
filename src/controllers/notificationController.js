@@ -13,7 +13,7 @@ exports.createNotification = async (data) => {
   });
 };
 
-exports.getUserNotifications = async (req, res) => {
+exports.getNotifications = async (req, res) => {
   try {
     const userId = req.user.user_id; 
     const notifications = await notificationService.getNotifications(userId);
