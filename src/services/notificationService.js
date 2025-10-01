@@ -2,10 +2,18 @@ const { PrismaClient } = require("@prisma/client")
 const prisma = new PrismaClient()
 
 exports.createNotification = async (data) => {
-  return await prisma.notification.create({ data });
+  return await prisma.notification.create({
+    data: {
+      title: data.title,
+      body: data.body,
+      type: data.type,
+      userId: data.userId,
+      suratId: data.suratId,
+    },
+  });
 };
 
-exports.getAllNotifications = async (userId) => {
+exports.getNotifications = async (userId) => {
   return await prisma.notification.findMany({
     where: { userId },
     orderBy: { createdAt: "desc" },

@@ -2,7 +2,6 @@ const beritaService = require("../services/beritaService");
 const { handleError } = require("../utils/errorHandler");
 const moment = require("moment-timezone");
 const R2Service = require("../services/r2Service"); 
-const { sendBeritaNotification, sendUpdateBeritaNotification } = require("../services/notificationService");
 
 exports.getAllBeritas = async (req, res) => {
     try {
