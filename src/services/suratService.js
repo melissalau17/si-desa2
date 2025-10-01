@@ -21,6 +21,16 @@ function normalizeSuratPhotos(surat) {
   };
 }
 
+exports.countAll = async () => {
+  return await prisma.surat.count();
+};
+
+exports.countAllByStatus = async (status) => {
+  return await prisma.surat.count({
+    where: { status }
+  });
+};
+
 exports.getAllSurat = async () => {
   const surats = await suratModel.findAll({
     include: { user: true },
