@@ -38,6 +38,7 @@ exports.getSuratById = async (id) => {
 exports.findByNIK = (nik) => suratModel.findByNIK(nik);
 
 exports.createSurat = async (data) => {
+  console.log("Data received in service:", data);
   const newSurat = await prisma.surat.create({
     data: {
       ...data, 
