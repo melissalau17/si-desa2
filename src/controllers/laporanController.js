@@ -103,7 +103,6 @@ exports.updateLaporan = async (req, res) => {
 
     const isVote = req.body.vote !== undefined;
 
-    // Base update payload for non-vote fields
     const updatePayload = {
       ...(req.body.deskripsi !== undefined && { deskripsi: req.body.deskripsi }),
       ...(req.body.lokasi !== undefined && { lokasi: req.body.lokasi }),
@@ -112,7 +111,6 @@ exports.updateLaporan = async (req, res) => {
     };
 
     if (isVote) {
-      // Check if the user has already voted
       const existingVote = await prisma.vote.findFirst({
         where: {
           userId,
@@ -123,8 +121,6 @@ exports.updateLaporan = async (req, res) => {
       if (existingVote) {
         return res.status(400).json({ message: "Anda sudah memberikan vote" });
       }
-
-      // Create new vote and increment vote count
       const updatedLaporan = await prisma.laporan.update({
         where: { laporan_id: laporanId },
         data: {
@@ -145,14 +141,12 @@ exports.updateLaporan = async (req, res) => {
       updatePayload.status = req.body.status;
     }
 
-    // Normal update without voting
     const updatedLaporan = await prisma.laporan.update({
       where: { laporan_id: laporanId },
       data: updatePayload,
       include: { votes: true },
     });
 
-    // Emit updates if status changed
     if (updatedLaporan.status !== oldLaporan.status && req.io) {
       req.io.emit("laporanStatusUpdated", updatedLaporan);
     }
