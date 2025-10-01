@@ -1,4 +1,5 @@
-const { S3Client, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
+const { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } = require('@aws-sdk/client-s3');
+const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 
 const ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
 const BUCKET_NAME = process.env.R2_BUCKET_NAME;
@@ -12,12 +13,8 @@ const r2Client = new S3Client({
   },
 });
 
-const PUBLIC_URL = `https://${ACCOUNT_ID}.r2.cloudflarestorage.com/${BUCKET_NAME}`;
-
 exports.uploadFile = async (fileBuffer, mimeType) => {
-  const fileName = `uploads/${Date.now()}-${Math.random()
-    .toString(36)
-    .substring(2, 15)}`;
+  const fileName = `uploads/${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
 
   const params = {
     Bucket: BUCKET_NAME,
@@ -28,7 +25,15 @@ exports.uploadFile = async (fileBuffer, mimeType) => {
 
   try {
     await r2Client.send(new PutObjectCommand(params));
-    return `${PUBLIC_URL}/${fileName}`;
+
+    // Generate a signed URL valid for 1 hour
+    const getObjectCommand = new GetObjectCommand({
+      Bucket: BUCKET_NAME,
+      Key: fileName,
+    });
+
+    const signedUrl = await getSignedUrl(r2Client, getObjectCommand, { expiresIn: 3600 });
+    return signedUrl;
   } catch (error) {
     console.error('Error uploading file to R2:', error);
     throw error;
@@ -36,10 +41,7 @@ exports.uploadFile = async (fileBuffer, mimeType) => {
 };
 
 exports.deleteFile = async (fileUrlOrKey) => {
-  let key = fileUrlOrKey;
-  if (fileUrlOrKey.startsWith('http')) {
-    key = fileUrlOrKey.replace(`${PUBLIC_URL}/`, '');
-  }
+  let key = fileUrlOrKey.startsWith('http') ? fileUrlOrKey.split('/').slice(-2).join('/') : fileUrlOrKey;
 
   const command = new DeleteObjectCommand({
     Bucket: BUCKET_NAME,

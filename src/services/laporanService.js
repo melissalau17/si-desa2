@@ -2,13 +2,9 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const r2Client = require('../r2Config');
 const { DeleteObjectCommand } = require('@aws-sdk/client-s3');
+const normalizePhotoUrl = require('../utils/normalizePhotoUrl'); 
 
 const PUBLIC_URL = process.env.R2_PUBLIC_URL;
-
-function normalizePhotoUrl(photoUrl) {
-    if (!photoUrl) return null;
-    return photoUrl.startsWith("http") ? photoUrl : `${PUBLIC_URL}/${photoUrl}`;
-}
 
 exports.countAll = () => prisma.laporan.count();
 

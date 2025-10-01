@@ -6,11 +6,7 @@ const R2Service = require("../services/r2Service");
 const { DeleteObjectCommand } = require('@aws-sdk/client-s3');
 const PUBLIC_URL = process.env.R2_PUBLIC_URL;
 const prisma = require("../prisma/prismaClient");
-
-function normalizePhotoUrl(photoUrl) {
-    if (!photoUrl) return null;
-    return photoUrl.startsWith("http") ? photoUrl : `${PUBLIC_URL}/${photoUrl}`;
-}
+const normalizePhotoUrl = require('../utils/normalizePhotoUrl'); 
 
 exports.countAll = async () => {
   const totalUsers = await prisma.user.count();
