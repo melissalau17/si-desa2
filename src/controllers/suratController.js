@@ -103,7 +103,7 @@ exports.createSurat = async (req, res) => {
       photo_ktp_url,
       photo_kk_url,
       tanggal: moment().tz("Asia/Jakarta").toDate(),
-      createdBy: userId,
+      createdBy: parseInt(userId, 10),
     });
 
     await sendSuratNotification(newSurat);
