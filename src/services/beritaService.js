@@ -23,8 +23,9 @@ exports.getLatest = (limit = 5) =>
 
 exports.getAllBeritas = async () => {
   try {
-    const beritas = await prisma.berita.findMany({ orderBy: { createdAt: "desc" } });
-    console.log("Beritas fetched:", beritas);
+    const beritas = await prisma.berita.findMany({
+      orderBy: { createdAt: "desc" },
+    });
     return beritas.map(b => ({ ...b, photo_url: normalizePhotoUrl(b.photo_url) }));
   } catch (err) {
     console.error("Error fetching all beritas:", err);
