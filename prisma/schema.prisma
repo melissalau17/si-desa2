@@ -123,5 +123,7 @@ model Notification {
     isRead    Boolean  @default(false)
     surat     Surat    @relation(fields: [suratId], references: [surat_id])
     user      User?    @relation(fields: [userId], references: [user_id])
+
+    @@map("notification")
 }
 
