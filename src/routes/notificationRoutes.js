@@ -4,19 +4,17 @@ const notificationController = require("../controllers/notificationController");
 const authMiddleware = require("../middlewares/authMiddleware");
 
 router.post(
-  "/notifications",
-  authMiddleware,
-  async (req, res) => {
-    try {
-      const { title, body, type, userId, suratId } = req.body;
-      const notif = await notificationController.createNotification({
-        title, body, type, userId, suratId
-      });
-      res.status(201).json(notif);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to create notification", error: error.message });
+    "/notifications",
+    authMiddleware,
+    async (req, res) => {
+        try {
+            const io = req.app.get("io");
+            const notif = await notificationService.createNotification(req.body, io);
+            res.status(201).json(notif);
+        } catch (error) {
+            res.status(500).json({ message: "Failed to create notification", error: error.message });
+        }
     }
-  }
 );
 
 router.get("/notifications", authMiddleware, notificationController.getNotifications);
