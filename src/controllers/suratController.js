@@ -136,7 +136,7 @@ exports.updateSurat = async (req, res) => {
         {
           title: "Surat Anda Telah Selesai",
           body: `Surat ${surat.jenis_surat || surat.nama_surat} telah selesai diproses.`,
-          userId: surat.user?.id, 
+          userId: surat.user?.user_id, 
           suratId: surat.surat_id,
         },
         io
