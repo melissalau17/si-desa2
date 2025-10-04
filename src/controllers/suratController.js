@@ -124,7 +124,7 @@ exports.updateSurat = async (req, res) => {
     const { status } = req.body;
 
     const surat = await prisma.surat.update({
-      where: { id: parseInt(id) },
+      where: { surat_id: parseInt(id) },
       data: { status },
     });
 
