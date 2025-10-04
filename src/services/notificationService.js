@@ -7,8 +7,8 @@ exports.createNotification = async (data, io) => {
       title: data.title,
       body: data.body,
       type: data.type,
-      userId: data.userId,
-      suratId: data.suratId,
+      user: { connect: { id: data.userId } },
+      surat: { connect: { surat_id: data.suratId } },
     },
   });
 
