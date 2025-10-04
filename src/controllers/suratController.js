@@ -4,6 +4,7 @@ const R2Service = require("../services/r2Service");
 const moment = require("moment-timezone");
 const PdfService = require("../services/pdfService");
 const { PrismaClient } = require("@prisma/client")
+const notificationService = require("../services/notificationService");
 const prisma = new PrismaClient()
 
 exports.getAllSurat = async (req, res) => {
@@ -118,44 +119,35 @@ exports.createSurat = async (req, res) => {
 };
 
 exports.updateSurat = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { status } = req.body;
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
 
-        const updatedSurat = await prisma.surat.update({
-            where: { surat_id: Number(id) },
-            data: { status },
-            include: { user: true }
-        });
+    const surat = await prisma.surat.update({
+      where: { id: parseInt(id) },
+      data: { status },
+    });
 
-        if (updatedSurat.status.toLowerCase() === "selesai") {
-            const notif = await notificationService.createNotification({
-                title: "Surat Selesai",
-                body: `Surat ID ${updatedSurat.surat_id} selesai diproses.`,
-                type: "surat",
-                userId: updatedSurat.createdBy,
-                suratId: updatedSurat.surat_id,
-            });
+    const io = req.app.get("io");
 
-            console.log("Notification created in DB:", notif);
-
-            if (req.io) {
-                req.io.emit("notification", {
-                    title: notif.title,
-                    body: notif.body,
-                    time: notif.createdAt,
-                });
-            }
-        }
-
-        res.status(200).json({
-            message: "Surat updated successfully",
-            data: updatedSurat,
-        });
-    } catch (error) {
-        console.error("Error updating surat:", error);
-        res.status(500).json({ message: "Something Wrong!", error: error.message });
+    if (status === "Selesai") {
+      await notificationService.createNotification(
+        {
+          title: "Surat Anda Telah Selesai",
+          body: `Surat ${surat.jenis_surat || surat.nama_surat} telah selesai diproses.`,
+          type: "surat_update",
+          userId: surat.userId,
+          suratId: surat.id,
+        },
+        io
+      );
     }
+
+    res.json({ success: true, data: surat });
+  } catch (err) {
+    console.error("Error updating surat:", err);
+    res.status(500).json({ error: "Gagal memperbarui surat" });
+  }
 };
 
 exports.deleteSurat = async (req, res) => {
