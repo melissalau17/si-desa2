@@ -12,23 +12,19 @@ const suratSchema = Joi.object({
     nama: Joi.string().required(),
     tempat_lahir: Joi.string().optional().allow(null, ""),
     tanggal_lahir: Joi.string()
-    .optional()
-    .allow(null, "")
-    .custom((value, helpers) => {
-        if (!value) return value;
-
-        const validFormats = [
-        /^\d{2}-\d{2}-\d{4}$/, 
-        /^\d{4}-\d{2}-\d{2}$/  
-        ];
-
-        const isValid = validFormats.some((regex) => regex.test(value));
-        if (!isValid) {
-        return helpers.error("any.invalid");
-        }
-
-        return value;
-    }),
+        .optional()
+        .allow(null, "")
+        .custom((value, helpers) => {
+            if (!value) return value;
+            const validFormats = [
+                /^\d{2}[-/]\d{2}[-/]\d{4}$/, // accepts both "-" and "/"
+                /^\d{4}[-/]\d{2}[-/]\d{2}$/
+            ];
+            if (!validFormats.some((regex) => regex.test(value))) {
+                return helpers.error("any.invalid");
+            }
+            return value;
+        }),
     no_hp: Joi.string().optional().allow(null, ""),
     email: Joi.string().optional().allow(null, ""),
     jenis_kelamin: Joi.string().optional().allow(null, ""),

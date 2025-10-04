@@ -1,7 +1,6 @@
 const suratService = require("../services/suratService");
 const { handleError } = require("../utils/errorHandler");
 const R2Service = require("../services/r2Service");
-const { sendSuratNotification, sendSuratStatusNotification } = require("../services/notificationService");
 const moment = require("moment-timezone");
 const PdfService = require("../services/pdfService");
 const { PrismaClient } = require("@prisma/client")
@@ -64,10 +63,10 @@ exports.createSurat = async (req, res) => {
         const tanggalLahirValue = tanggal_lahir?.trim() || null;
 
         const parsedTanggalLahir =
-        tanggalLahirValue &&
-        moment(tanggalLahirValue, ["DD-MM-YYYY", "YYYY-MM-DD"], true).isValid()
-            ? moment(tanggalLahirValue, ["DD-MM-YYYY", "YYYY-MM-DD"]).toDate()
-            : null;
+            tanggalLahirValue &&
+                moment(tanggalLahirValue, ["DD-MM-YYYY", "DD/MM/YYYY", "YYYY-MM-DD"], true).isValid()
+                ? moment(tanggalLahirValue, ["DD-MM-YYYY", "DD/MM/YYYY", "YYYY-MM-DD"]).toDate()
+                : null;
 
         if (!nama || !nik || !alamat || !jenis_surat || !tujuan_surat) {
             return res.status(400).json({ message: "Semua field wajib diisi!" });
@@ -109,8 +108,6 @@ exports.createSurat = async (req, res) => {
             createdBy: parseInt(userId, 10),
         });
 
-        await sendSuratNotification(newSurat);
-
         res.status(201).json({
             message: "Surat berhasil dibuat!",
             data: newSurat,
@@ -121,44 +118,44 @@ exports.createSurat = async (req, res) => {
 };
 
 exports.updateSurat = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { status } = req.body;
+    try {
+        const { id } = req.params;
+        const { status } = req.body;
 
-    const updatedSurat = await prisma.surat.update({
-      where: { surat_id: Number(id) },
-      data: { status },
-      include: { user: true } 
-    });
-
-    if (updatedSurat.status.toLowerCase() === "selesai") {
-      const notif = await notificationService.createNotification({
-        title: "Surat Selesai",
-        body: `Surat ID ${updatedSurat.surat_id} selesai diproses.`,
-        type: "surat",
-        userId: updatedSurat.createdBy,
-        suratId: updatedSurat.surat_id,
-      });
-
-      console.log("Notification created in DB:", notif);
-
-      if (req.io) {
-        req.io.emit("notification", {
-          title: notif.title,
-          body: notif.body,
-          time: notif.createdAt,
+        const updatedSurat = await prisma.surat.update({
+            where: { surat_id: Number(id) },
+            data: { status },
+            include: { user: true }
         });
-      }
-    }
 
-    res.status(200).json({
-      message: "Surat updated successfully",
-      data: updatedSurat,
-    });
-  } catch (error) {
-    console.error("Error updating surat:", error);
-    res.status(500).json({ message: "Something Wrong!", error: error.message });
-  }
+        if (updatedSurat.status.toLowerCase() === "selesai") {
+            const notif = await notificationService.createNotification({
+                title: "Surat Selesai",
+                body: `Surat ID ${updatedSurat.surat_id} selesai diproses.`,
+                type: "surat",
+                userId: updatedSurat.createdBy,
+                suratId: updatedSurat.surat_id,
+            });
+
+            console.log("Notification created in DB:", notif);
+
+            if (req.io) {
+                req.io.emit("notification", {
+                    title: notif.title,
+                    body: notif.body,
+                    time: notif.createdAt,
+                });
+            }
+        }
+
+        res.status(200).json({
+            message: "Surat updated successfully",
+            data: updatedSurat,
+        });
+    } catch (error) {
+        console.error("Error updating surat:", error);
+        res.status(500).json({ message: "Something Wrong!", error: error.message });
+    }
 };
 
 exports.deleteSurat = async (req, res) => {
