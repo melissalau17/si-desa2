@@ -61,10 +61,11 @@ exports.createSurat = async (req, res) => {
             foto_usaha,
         } = req.body;
 
-        const parsedTanggalLahir = tanggal_lahir
-            ? moment(tanggal_lahir, "DD-MM-YYYY", true).isValid()
-                ? moment(tanggal_lahir, "DD-MM-YYYY").toDate()
-                : null
+        const tanggalLahirValue = tanggal_lahir?.trim() || null;
+
+        const parsedTanggalLahir =
+        tanggalLahirValue && moment(tanggalLahirValue, "DD-MM-YYYY", true).isValid()
+            ? moment(tanggalLahirValue, "DD-MM-YYYY").toDate()
             : null;
 
         if (!nama || !nik || !alamat || !jenis_surat || !tujuan_surat) {
