@@ -86,7 +86,7 @@ exports.createLaporan = async (data) => {
                 vote: vote || 0,
                 status,
                 photo_url,
-                createdBy: user_id,
+                user_id: user_id,
             },
             include: {
                 user: {
