@@ -153,7 +153,7 @@ exports.updateUser = async (req, res) => {
             photo_url: photoUrl,
         };
 
-        const updatedUser = await userService.updateUser(userId, updatePayload);
+        const updatedUser = await userService.updateUser(userId, updatePayload, photo_url);
 
         if (!updatedUser) {
             return res.status(404).json({ message: "User tidak ditemukan!" });
