@@ -60,7 +60,7 @@ model Laporan {
   updatedAt    DateTime?      @updatedAt @db.DateTime(0)
   createdBy    Int
   votes        Vote[]
-  user         User?          @relation(fields: [user_id], references: [user_id])
+  user         User?          @relation(fields: [createdBy], references: [user_id])
   notification Notification[]
 
   @@index([user_id], map: "laporan_user_id_fkey")
