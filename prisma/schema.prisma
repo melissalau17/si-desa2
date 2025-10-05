@@ -9,24 +9,24 @@ datasource db {
 }
 
 model User {
-  user_id   Int       @id @default(autoincrement())
-  NIK       String    @unique(map: "User_NIK_key")
-  nama      String
-  no_hp     String
-  jenis_kel String
-  alamat    String
-  agama     String
-  username  String
-  password  String
-  photo_url String?   @db.VarChar(255)
-  role      String    @default("user")
-  email     String?   @db.VarChar(255)
-  laporan   Laporan[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt @db.DateTime(0)
-  Vote      Vote[]
-  surats    Surat[]
+  user_id       Int            @id @default(autoincrement())
+  NIK           String         @unique(map: "User_NIK_key")
+  nama          String
+  no_hp         String
+  jenis_kel     String
+  alamat        String
+  agama         String
+  username      String
+  password      String
+  photo_url     String?        @db.VarChar(255)
+  role          String         @default("user")
+  email         String?        @db.VarChar(255)
+  createdAt     DateTime       @default(now()) @db.DateTime(0)
+  updatedAt     DateTime       @default(now()) @updatedAt @db.DateTime(0)
+  Vote          Vote[]
+  laporan       Laporan[]
   notifications Notification[]
+  surats        Surat[]
 
   @@map("user")
 }
@@ -37,61 +37,64 @@ model Berita {
   kategori  String
   photo_url String?   @db.VarChar(255)
   tanggal   String?
-  kontent   String
+  kontent   String?   @db.LongText
   status    String
-  createdAt DateTime  @default(now()) @db.DateTime(0)
-  updatedAt DateTime  @updatedAt @db.DateTime(0)
+  createdAt DateTime? @default(now()) @db.DateTime(0)
+  updatedAt DateTime? @updatedAt @db.DateTime(0)
   createdBy Int
 
   @@map("berita")
 }
 
 model Laporan {
-  laporan_id Int       @id @default(autoincrement())
-  keluhan    String
-  deskripsi  String
-  photo_url  String?   @db.VarChar(255)
-  tanggal    String?
-  lokasi     String
-  vote       Int?      @default(0)
-  status     String
-  createdBy  Int
-  user       User      @relation(fields: [createdBy], references: [user_id])
-  votes      Vote[]
+  laporan_id   Int            @id @default(autoincrement())
+  keluhan      String
+  deskripsi    String
+  photo_url    String?        @db.VarChar(255)
+  tanggal      String?
+  lokasi       String
+  vote         Int?           @default(0)
+  status       String
+  user_id      Int?
+  createdAt    DateTime?      @default(now()) @db.DateTime(0)
+  updatedAt    DateTime?      @updatedAt @db.DateTime(0)
+  createdBy    Int
+  votes        Vote[]
+  user         User?          @relation(fields: [user_id], references: [user_id])
+  notification Notification[]
 
-  createdAt  DateTime  @default(now()) @db.DateTime(0)
-  updatedAt  DateTime  @updatedAt @db.DateTime(0)
-
+  @@index([user_id], map: "laporan_user_id_fkey")
   @@map("laporan")
 }
 
 model Surat {
-  surat_id       Int       @id @default(autoincrement())
+  surat_id       Int            @id @default(autoincrement())
   nama           String
   nik            String
   tempat_lahir   String?
-  tanggal_lahir  DateTime? @db.Date
+  tanggal_lahir  DateTime?      @db.Date
   jenis_kelamin  String?
   agama          String?
   alamat         String
   jenis_surat    String
   tujuan_surat   String
-  photo_ktp      String?   @db.VarChar(255)
-  photo_kk       String?   @db.VarChar(255)
-  foto_usaha     String?   @db.VarChar(255)
+  photo_ktp      String?        @db.VarChar(255)
+  photo_kk       String?        @db.VarChar(255)
+  foto_usaha     String?        @db.VarChar(255)
   waktu_kematian String?
   gaji_ortu      String?
-  tanggal        DateTime  @default(now())
-  status         String?   @db.VarChar(50)
+  tanggal        DateTime       @default(now())
+  status         String?        @db.VarChar(50)
   no_hp          String?
-  email          String?   @default("")
-  createdAt      DateTime  @default(now()) @db.DateTime(0)
-  updatedAt      DateTime  @updatedAt @db.DateTime(0)
+  email          String?        @default("")
+  createdAt      DateTime?      @default(now()) @db.DateTime(0)
+  updatedAt      DateTime?      @updatedAt @db.DateTime(0)
   createdBy      Int
-  
-  user           User      @relation(fields: [createdBy], references: [user_id])
+  notifications  Notification[]
+  user           User           @relation(fields: [createdBy], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_surat_user")
+
+  @@index([createdBy], map: "fk_surat_user")
   @@map("surat")
-  notifications Notification[]
 }
 
 model keuangan {
@@ -105,23 +108,32 @@ model keuangan {
 }
 
 model Vote {
-  id        Int      @id @default(autoincrement())
-  user      User     @relation(fields: [userId], references: [user_id])
+  id        Int       @id @default(autoincrement())
   userId    Int
-  laporan   Laporan  @relation(fields: [laporanId], references: [laporan_id])
   laporanId Int
-  createdAt DateTime @default(now())
+  createdAt DateTime? @default(now()) @db.DateTime(0)
+  laporan   Laporan   @relation(fields: [laporanId], references: [laporan_id], onDelete: Cascade, onUpdate: NoAction, map: "FK_Vote_Laporan")
+  user      User      @relation(fields: [userId], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_Vote_User")
+
+  @@index([laporanId], map: "FK_Vote_Laporan")
+  @@index([userId], map: "FK_Vote_User")
 }
 
 model Notification {
-    id      Int      @id @default(autoincrement())
-    title   String
-    body    String
-    suratId Int
-    userId  Int?
-    createdAt DateTime @default(now())
-    isRead    Boolean  @default(false)
-    surat     Surat    @relation(fields: [suratId], references: [surat_id])
-    user      User?    @relation(fields: [userId], references: [user_id])
-}
+  id        Int       @id @default(autoincrement())
+  title     String    @db.VarChar(255)
+  body      String    @db.Text
+  suratId   Int
+  userId    Int?
+  createdAt DateTime? @default(now()) @db.DateTime(0)
+  isRead    Boolean?  @default(false)
+  laporanId Int?
+  surat     Surat     @relation(fields: [suratId], references: [surat_id], onDelete: NoAction, onUpdate: NoAction, map: "notification_ibfk_1")
+  user      User?     @relation(fields: [userId], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "notification_ibfk_2")
+  laporan   Laporan?  @relation(fields: [laporanId], references: [laporan_id])
 
+  @@index([laporanId], map: "notification_laporanId_fkey")
+  @@index([suratId], map: "suratId")
+  @@index([userId], map: "userId")
+  @@map("notification")
+}

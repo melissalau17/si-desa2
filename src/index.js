@@ -86,21 +86,19 @@ app.use("/api", notificationRoutes);
 app.use("/api", proxyRoutes);
 
 io.on("connection", (socket) => {
-    console.log("🔌 New client connected:", socket.id);
+  console.log("User connected:", socket.id);
 
-    socket.emit("notification", {
-        title: "Welcome",
-        body: "Real-time connection established.",
-    });
+  socket.on("join", (userId) => {
+    socket.join(`user_${userId}`);
+    console.log(`User ${userId} joined room user_${userId}`);
+  });
 
-    socket.on("client_event", (data) => {
-        console.log("Received from client:", data);
-    });
-
-    socket.on("disconnect", () => {
-        console.log("Client disconnected:", socket.id);
-    });
+  socket.on("disconnect", () => {
+    console.log("User disconnected:", socket.id);
+  });
 });
+
+app.set("io", io);
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, "0.0.0.0", () => {

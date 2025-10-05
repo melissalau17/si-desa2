@@ -1,16 +1,20 @@
 const { PrismaClient } = require("@prisma/client")
 const prisma = new PrismaClient()
 
-exports.createNotification = async (data) => {
-  return await prisma.notification.create({
+exports.createNotification = async (data, io) => {
+  const notif = await prisma.notification.create({
     data: {
       title: data.title,
       body: data.body,
-      type: data.type,
-      userId: data.userId || null,
-      suratId: data.suratId || null,
+      user: { connect: { user_id: data.userId } },
+      ...(data.suratId && { surat: { connect: { surat_id: data.suratId } } }),
+      ...(data.laporanId && { laporan: { connect: { laporan_id: data.laporanId } } }),
     },
   });
+
+  io.to(`user_${data.userId}`).emit("notification:new", notif);
+
+  return notif;
 };
 
 exports.getNotifications = async (userId) => {

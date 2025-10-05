@@ -4,6 +4,7 @@ const moment = require("moment-timezone");
 const R2Service = require("../services/r2Service");
 const { PrismaClient } = require("@prisma/client")
 const prisma = new PrismaClient()
+const notificationService = require("../services/notificationService");
 
 exports.getAllLaporans = async (req, res) => {
     try {
@@ -110,38 +111,56 @@ exports.updateLaporan = async (req, res) => {
 
     if (isVote) {
       const existingVote = await prisma.vote.findFirst({
-        where: {
-          userId,
-          laporanId,
-        },
+        where: { userId, laporanId },
       });
 
       if (existingVote) {
         return res.status(400).json({ message: "Anda sudah memberikan vote" });
       }
+
       const updatedLaporan = await prisma.laporan.update({
         where: { laporan_id: laporanId },
         data: {
           ...updatePayload,
           vote: { increment: 1 },
           votes: { create: { userId } },
-          status: oldLaporan.vote + 1 >= 50 && oldLaporan.status !== "siap dikerjakan"
-            ? "siap dikerjakan"
-            : oldLaporan.status,
+          status:
+            oldLaporan.vote + 1 >= 50 && oldLaporan.status !== "siap dikerjakan"
+              ? "siap dikerjakan"
+              : oldLaporan.status,
         },
-        include: { votes: true },
+        include: { votes: true, user: true },
       });
 
-      return res.status(200).json({ message: "Vote berhasil!", data: updatedLaporan });
-    } else if (req.body.status !== undefined) {
+      return res.status(200).json({
+        message: "Vote berhasil!",
+        data: updatedLaporan,
+      });
+    }
+
+    if (req.body.status !== undefined) {
       updatePayload.status = req.body.status;
     }
 
     const updatedLaporan = await prisma.laporan.update({
       where: { laporan_id: laporanId },
       data: updatePayload,
-      include: { votes: true },
+      include: { user: true, votes: true },
     });
+
+    if (req.body.status && req.body.status !== oldLaporan.status) {
+      const io = req.app.get("io");
+
+      await notificationService.createNotification(
+        {
+          title: "Status Laporan Anda Berubah",
+          body: `Laporan "${updatedLaporan.keluhan}" kini berstatus: ${req.body.status}`,
+          userId: updatedLaporan.user_id,
+          laporanId: updatedLaporan.laporan_id,
+        },
+        io
+      );
+    }
 
     res.status(200).json({
       message: "Laporan berhasil diperbarui!",
@@ -154,19 +173,19 @@ exports.updateLaporan = async (req, res) => {
 };
 
 exports.voteLaporan = async (req, res) => {
-  try {
-    const laporanId = parseInt(req.params.id);
-    const userId = req.user?.user_id;
+    try {
+        const laporanId = parseInt(req.params.id);
+        const userId = req.user?.user_id;
 
-    if (!userId) return res.status(401).json({ message: "User not authenticated" });
+        if (!userId) return res.status(401).json({ message: "User not authenticated" });
 
-    const updatedLaporan = await laporanService.voteLaporan(laporanId, userId);
+        const updatedLaporan = await laporanService.voteLaporan(laporanId, userId);
 
-    res.status(200).json({ message: "Vote berhasil!", data: updatedLaporan });
-  } catch (error) {
-    console.error("Error voting laporan:", error);
-    res.status(400).json({ message: error.message });
-  }
+        res.status(200).json({ message: "Vote berhasil!", data: updatedLaporan });
+    } catch (error) {
+        console.error("Error voting laporan:", error);
+        res.status(400).json({ message: error.message });
+    }
 };
 
 exports.deleteLaporan = async (req, res) => {

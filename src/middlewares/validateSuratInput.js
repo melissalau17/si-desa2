@@ -16,8 +16,11 @@ const suratSchema = Joi.object({
         .allow(null, "")
         .custom((value, helpers) => {
             if (!value) return value;
-            const regex = /^\d{2}-\d{2}-\d{4}$/;
-            if (!regex.test(value)) {
+            const validFormats = [
+                /^\d{2}[-/]\d{2}[-/]\d{4}$/, // accepts both "-" and "/"
+                /^\d{4}[-/]\d{2}[-/]\d{2}$/
+            ];
+            if (!validFormats.some((regex) => regex.test(value))) {
                 return helpers.error("any.invalid");
             }
             return value;
