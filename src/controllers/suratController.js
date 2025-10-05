@@ -135,7 +135,7 @@ exports.updateSurat = async (req, res) => {
       await notificationService.createNotification(
         {
           title: "Surat Anda Telah Selesai",
-          body: `Surat ${surat.jenis_surat || surat.nama_surat} telah selesai diproses.`,
+          body: `${surat.jenis_surat} telah selesai diproses.`,
           userId: surat.user?.user_id, 
           suratId: surat.surat_id,
         },

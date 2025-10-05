@@ -37,7 +37,6 @@ exports.generateSuratPdf = async (suratId) => {
     pekerjaan: suratDataFromDB.pekerjaan,
     alamat: suratDataFromDB.alamat,
 
-    // dependents
     dependents: dependents.map((d) => ({
       nama: d.nama,
       nik: d.nik,
