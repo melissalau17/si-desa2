@@ -103,11 +103,6 @@ exports.createUser = async (req, res) => {
       photo_url: photoUrl,
     });
 
-    if (io) {
-      NotificationService.sendUserRegistrationNotification(newUser, io);
-      io.emit("dashboard_update", { message: "New user registered" });
-    }
-
     return res.status(201).json({
       message: "User berhasil dibuat!",
       data: newUser,
