@@ -132,6 +132,9 @@ exports.updateLaporan = async (req, res) => {
         include: { votes: true, user: true },
       });
 
+      const io = req.app.get("io");
+      io.emit("laporan:updateVote", updatedLaporan);
+
       return res.status(200).json({
         message: "Vote berhasil!",
         data: updatedLaporan,
@@ -180,6 +183,13 @@ exports.voteLaporan = async (req, res) => {
         if (!userId) return res.status(401).json({ message: "User not authenticated" });
 
         const updatedLaporan = await laporanService.voteLaporan(laporanId, userId);
+
+        const io = req.app.get("io");
+
+        io.emit("laporan:votesUpdated", {
+        laporanId,
+        totalVotes: updatedLaporan.vote,
+        });
 
         res.status(200).json({ message: "Vote berhasil!", data: updatedLaporan });
     } catch (error) {
