@@ -100,8 +100,7 @@ exports.createUser = async (req, res) => {
       jenis_kel,
       no_hp,
       role,
-      photo_url: photoUrl,
-    });
+    }, photoFile);
 
     return res.status(201).json({
       message: "User berhasil dibuat!",
